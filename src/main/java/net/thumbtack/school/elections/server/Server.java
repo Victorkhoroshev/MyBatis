@@ -11,6 +11,7 @@ import java.util.List;
 public class Server {
     private static final String EMPTY_JSON = "";
     private static final String NULL_VALUE = "Некорректный запрос.";
+    //REVU:private modifiers?
     Gson gson;
     ContextService contextService;
     SessionService sessionService;
@@ -80,6 +81,7 @@ public class Server {
     public String register(String requestJsonString) {
         String response = "";
         RegisterDtoRequest request = gson.fromJson(requestJsonString, RegisterDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (requestJsonString == null || !request.requiredFieldsIsNotNull()) {
             return gson.toJson(new ErrorDtoResponse("Пожалуйста, заполните все данные."));
         }
@@ -118,6 +120,7 @@ public class Server {
         return gson.toJson(new ErrorDtoResponse(response));
     }
 
+
     /**
      * Login user.
      * @param requestJsonString gson element. Fields: String login, String password.
@@ -132,6 +135,7 @@ public class Server {
     public String login(String requestJsonString) {
         String response = "";
         LoginDtoRequest request = gson.fromJson(requestJsonString, LoginDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request == null || !request.requiredFieldsIsNotNull()) {
             response += "Пожалуйста, введите логин и пароль.";
             return gson.toJson(new ErrorDtoResponse(response));
@@ -171,6 +175,7 @@ public class Server {
      */
     public String logout(String requestJsonString) {
         LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request == null || !request.requiredFieldsIsNotNull()) {
             return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
@@ -201,6 +206,7 @@ public class Server {
      */
     public String getVoterList(String requestJsonString) {
         GetVoterListDtoRequest request = gson.fromJson(requestJsonString, GetVoterListDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             if (!sessionService.isLogin(request.getToken())) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
@@ -221,6 +227,7 @@ public class Server {
      */
     public String addCandidate(String requestJsonString) {
         AddCandidateDtoRequest request = gson.fromJson(requestJsonString, AddCandidateDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 candidateService.addCandidate(sessionService.getVoter(request.getToken()),
@@ -245,6 +252,7 @@ public class Server {
     public String confirmationCandidacy(String requestJsonString) {
         ConfirmationCandidacyDtoRequest request = gson.fromJson(requestJsonString,
                 ConfirmationCandidacyDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 ideaService.addAllIdeas(sessionService.getVoter(request.getToken()), request.getCandidateIdeas());
@@ -271,6 +279,7 @@ public class Server {
      */
     public String withdrawCandidacy(String requestJsonString) {
         WithdrawCandidacyRequest request = gson.fromJson(requestJsonString, WithdrawCandidacyRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 candidateService.withdrawCandidacy(sessionService.getVoter(request.getToken()));
@@ -295,6 +304,7 @@ public class Server {
      */
     public String addIdea(String requestJsonString) {
         AddIdeaDtoRequest request = gson.fromJson(requestJsonString, AddIdeaDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 if (candidateService.isCandidate(sessionService.getVoter(request.getToken()))) {
@@ -326,6 +336,7 @@ public class Server {
      */
     public String estimateIdea(String requestJsonString) {
         EstimateIdeaDtoRequest request = gson.fromJson(requestJsonString, EstimateIdeaDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 ideaService.estimate(request.getIdeaKey(), request.getRating(),
@@ -351,6 +362,7 @@ public class Server {
      */
     public String changeRating(String requestJsonString) {
         ChangeRatingDtoRequest request = gson.fromJson(requestJsonString, ChangeRatingDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 ideaService.changeRating(sessionService.getVoter(request.getToken()),
@@ -375,6 +387,7 @@ public class Server {
      */
     public String removeRating(String requestJsonString) {
         RemoveRatingDtoRequest request = gson.fromJson(requestJsonString, RemoveRatingDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 ideaService.removeRating(sessionService.getVoter(request.getToken()), request.getIdeaKey());
@@ -399,6 +412,7 @@ public class Server {
      */
     public String takeIdea(String requestJsonString) {
         TakeIdeaDtoRequest request = gson.fromJson(requestJsonString, TakeIdeaDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 candidateService.addIdea(sessionService.getVoter(request.getToken()),
@@ -423,6 +437,7 @@ public class Server {
      */
     public String removeIdea(String requestJsonString) {
         RemoveIdeaDtoRequest request = gson.fromJson(requestJsonString, RemoveIdeaDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 candidateService.removeIdea(sessionService.getVoter(request.getToken()),
@@ -445,6 +460,7 @@ public class Server {
      */
     public String getCandidatesMap(String requestJsonString) {
         GetCandidateMapDtoRequest request = gson.fromJson(requestJsonString, GetCandidateMapDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             if (!sessionService.isLogin(request.getToken())) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
@@ -464,6 +480,7 @@ public class Server {
      */
     public String getAllIdeas(String requestJsonString) {
         GetAllIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllIdeasDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             if (!sessionService.isLogin(request.getToken())) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
@@ -483,6 +500,7 @@ public class Server {
      */
     public String getAllVotersIdeas(String requestJsonString) {
         GetAllVotersIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllVotersIdeasDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             if (!sessionService.isLogin(request.getToken())) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
@@ -501,6 +519,7 @@ public class Server {
      */
     public String startElection(String requestJsonString) {
         StartElectionDtoRequest request = gson.fromJson(requestJsonString, StartElectionDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 commissionerService.startElection(request.getToken(), candidateService.getCandidateSet());
@@ -525,6 +544,7 @@ public class Server {
      */
     public String vote(String requestJsonStrong) {
         VoteDtoRequest request = gson.fromJson(requestJsonStrong, VoteDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 electionService.vote(sessionService.getVoter(request.getToken()),
@@ -546,6 +566,7 @@ public class Server {
      */
     public String getElectionResult(String requestJsonString) {
         GetElectionResultDtoRequest request = gson.fromJson(requestJsonString, GetElectionResultDtoRequest.class);
+        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
         if (request != null && request.requiredFieldsIsNotNull()) {
             try {
                 return gson.toJson(new GetElectionResultDtoResponse(

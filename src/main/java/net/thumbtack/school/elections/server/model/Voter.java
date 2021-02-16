@@ -21,6 +21,7 @@ public class Voter implements Serializable {
     public Voter (String firstName, String lastName, @Nullable String patronymic, String street, Integer house, @Nullable Integer apartment, String login, String password) {
         this.firstName = firstName.toLowerCase(Locale.ROOT);
         this.lastName = lastName.toLowerCase(Locale.ROOT);
+        //REVU:вынесите эту логику в сеттер
         if( patronymic != null) {
             this.patronymic = patronymic.toLowerCase(Locale.ROOT);
         } else {
@@ -31,6 +32,7 @@ public class Voter implements Serializable {
         this.apartment = apartment;
         this.login = login;
         this.password = password;
+        //REVU: по умолчанию boolean переменная и так равна false, может не имеет смысла ее выставлять
         setHasOwnCandidate(false);
     }
 

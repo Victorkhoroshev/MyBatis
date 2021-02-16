@@ -25,6 +25,7 @@ public class CandidateService implements Serializable {
      * @throws ServerException if election start.
      */
     public void addCandidate(Voter voter, Voter candidate) throws ServerException {
+        //REVU: поменяйте местами, если голосование начато, то кидаем эксепшн. Else тогда можно будет убрать
         if (!contextService.isElectionStart()) {
             if (!voter.isHasOwnCandidate() && !dao.contains(candidate.getLogin())) {
                 dao.save(new Candidate(candidate));
@@ -42,6 +43,7 @@ public class CandidateService implements Serializable {
      * @throws ServerException if database not contains voter's login or election start.
      */
     public void confirmationCandidacy (Voter voter, List<Idea> candidateIdeas) throws ServerException {
+        //REVU: поменяйте местами, если голосование начато, то кидаем эксепшн. Else тогда можно будет убрать
         if (!contextService.isElectionStart()) {
             if (dao.contains(voter.getLogin())) {
                 ideas.put(dao.get(voter.getLogin()), candidateIdeas);
@@ -63,6 +65,7 @@ public class CandidateService implements Serializable {
      * @throws ServerException if database not contains voter's login or election start.
      */
     public void withdrawCandidacy (Voter voter) throws ServerException {
+        //REVU: поменяйте местами, если голосование начато, то кидаем эксепшн. Else тогда можно будет убрать
         if (!contextService.isElectionStart()) {
             ideas.remove(dao.get(voter.getLogin()));
             dao.delete(dao.get(voter.getLogin()));
@@ -88,6 +91,7 @@ public class CandidateService implements Serializable {
      * @throws ServerException if database not contains this voter or election start.
      */
     public void addIdea(Voter voter, Idea idea) throws ServerException {
+        //REVU: поменяйте местами, если голосование начато, то кидаем эксепшн. Else тогда можно будет убрать
         if (!contextService.isElectionStart()) {
             ideas.get(dao.get(voter.getLogin())).add(idea);
         } else {
@@ -102,6 +106,7 @@ public class CandidateService implements Serializable {
      * @throws ServerException if database not contains this voter or election start.
      */
     public void removeIdea(Voter voter, Idea idea) throws ServerException {
+        //REVU: поменяйте местами, если голосование начато, то кидаем эксепшн. Else тогда можно будет убрать
         if (!contextService.isElectionStart()) {
             if (idea.getAuthor() != voter) {
                 ideas.get(dao.get(voter.getLogin())).remove(idea);
@@ -138,6 +143,7 @@ public class CandidateService implements Serializable {
         return null;
     }
 
+    //REVU: думаю этот метод здесь нам не нужен
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -145,7 +151,7 @@ public class CandidateService implements Serializable {
         CandidateService that = (CandidateService) o;
         return ideas.equals(that.ideas);
     }
-
+    //REVU: думаю этот метод здесь нам не нужен
     @Override
     public int hashCode() {
         return Objects.hash(dao, ideas);

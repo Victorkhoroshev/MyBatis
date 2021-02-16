@@ -17,6 +17,7 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
     @Override
     public Candidate get(String login) throws ServerException {
         Candidate candidate;
+        //REVU: вынесите Database в отдельную переменную класса
         for (Candidate value : Database.getCandidateSet()) {
             candidate = value;
             if (candidate.getVoter().getLogin().equals(login)) {
@@ -32,6 +33,7 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
      */
     @Override
     public void save(Candidate candidate) {
+        //REVU: вынесите Database в отдельную переменную класса
         Database.getCandidateSet().add(candidate);
     }
 
@@ -43,6 +45,7 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
      */
     @Override
     public boolean contains(String login) {
+        //REVU: вынесите Database в отдельную переменную класса
         for (Candidate candidate : Database.getCandidateSet()) {
             if (candidate.getVoter().getLogin().equals(login)) {
                 return true;
@@ -57,6 +60,7 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
      */
     @Override
     public void delete(Candidate candidate) {
+        //REVU: вынесите Database в отдельную переменную класса
         Database.getCandidateSet().remove(candidate);
     }
 }

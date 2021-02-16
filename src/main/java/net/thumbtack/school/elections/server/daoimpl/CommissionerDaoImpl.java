@@ -37,6 +37,7 @@ public class CommissionerDaoImpl implements CommissionerDao<Commissioner> {
                 return commissioner;
             }
         }
+        //REVU: это ошибка сервис уровня, дао просто должно вернуть null
         throw new ServerException(ExceptionErrorCode.NOT_FOUND);
     }
 }

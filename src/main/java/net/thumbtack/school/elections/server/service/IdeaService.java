@@ -205,7 +205,7 @@ public class IdeaService implements Serializable {
         }
         throw new ServerException(ExceptionErrorCode.IDEA_NOT_FOUND);
     }
-
+    //REVU: думаю этот метод здесь нам не нужен
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -213,7 +213,7 @@ public class IdeaService implements Serializable {
         IdeaService that = (IdeaService) o;
         return ideas.equals(that.ideas);
     }
-
+    //REVU: думаю этот метод здесь нам не нужен
     @Override
     public int hashCode() {
         return Objects.hash(ideas);

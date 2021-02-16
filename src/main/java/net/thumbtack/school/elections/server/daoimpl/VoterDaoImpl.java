@@ -24,6 +24,7 @@ public class VoterDaoImpl implements VoterDao<Voter> {
                 return voter;
             }
         }
+        //REVU: это ошибка сервис уровня, дао просто должно вернуть null
         throw new ServerException(ExceptionErrorCode.NOT_FOUND);
     }
 

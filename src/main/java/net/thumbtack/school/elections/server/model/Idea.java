@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Idea implements Comparable<Idea>, Serializable {
+    //REVU: предложение может быть без автора?
     private @Nullable Voter author;
     private final String key;
     private final String textOfIdea;

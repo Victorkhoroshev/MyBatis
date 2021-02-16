@@ -16,6 +16,7 @@ public class Context implements Serializable {
     private IdeaService ideaService;
     private ElectionService electionService;
     private Set<Commissioner> commissionerSet;
+    //REVU: нужен ли нам вообще это класс, если мы перенесем переменные isElectionStart и isElectionStop в ElectionService?
     private Boolean isElectionStart;
     private Boolean isElectionStop;
 
