@@ -4,9 +4,11 @@ import net.thumbtack.school.elections.server.model.Commissioner;
 import net.thumbtack.school.elections.server.service.ServerException;
 import java.util.List;
 
-public interface CommissionerDao<T> {
+public interface CommissionerDao {
 
     List<String> getLogins();
 
     Commissioner get(String login) throws ServerException;
+
+    boolean contain(String login);
 }

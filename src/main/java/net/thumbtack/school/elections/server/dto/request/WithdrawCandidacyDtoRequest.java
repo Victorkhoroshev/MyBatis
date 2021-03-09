@@ -1,9 +1,9 @@
 package net.thumbtack.school.elections.server.dto.request;
 
-public class WithdrawCandidacyRequest {
+public class WithdrawCandidacyDtoRequest {
     private String token;
 
-    public WithdrawCandidacyRequest(String token) {
+    public WithdrawCandidacyDtoRequest(String token) {
         setToken(token);
     }
 

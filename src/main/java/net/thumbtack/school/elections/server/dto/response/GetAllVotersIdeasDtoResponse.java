@@ -9,4 +9,8 @@ public class GetAllVotersIdeasDtoResponse {
     public GetAllVotersIdeasDtoResponse(List<Idea> ideas) {
         this.ideas = ideas;
     }
+
+    public List<Idea> getIdeas() {
+        return ideas;
+    }
 }

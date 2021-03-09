@@ -6,25 +6,23 @@ import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.service.ServerException;
 
-public class CandidateDaoImpl implements CandidateDao<Candidate> {
-
+public class CandidateDaoImpl implements CandidateDao {
+    private final Database database = Database.getInstance();
     /**
      * Get candidate by his login from database.
      * @param login the login candidate, who already logged out from the server.
-     * @return The candidate who owns this login.
-     * @throws ServerException if login not found in database's candidate's set.
+     * @return The candidate who owns this login or null if candidate not found.
      */
     @Override
-    public Candidate get(String login) throws ServerException {
+    public Candidate get(String login) {
         Candidate candidate;
-        //REVU: вынесите Database в отдельную переменную класса
-        for (Candidate value : Database.getCandidateSet()) {
+        for (Candidate value : database.getCandidateSet()) {
             candidate = value;
             if (candidate.getVoter().getLogin().equals(login)) {
                 return candidate;
             }
         }
-        throw new ServerException(ExceptionErrorCode.CANDIDATE_NOT_FOUND);
+        return null;
     }
 
     /**
@@ -32,9 +30,9 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
      * @param candidate new candidate for election.
      */
     @Override
-    public void save(Candidate candidate) {
-        //REVU: вынесите Database в отдельную переменную класса
-        Database.getCandidateSet().add(candidate);
+    public Candidate save(Candidate candidate) {
+        database.getCandidateSet().add(candidate);
+        return get(candidate.getVoter().getLogin());
     }
 
     /**
@@ -45,8 +43,7 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
      */
     @Override
     public boolean contains(String login) {
-        //REVU: вынесите Database в отдельную переменную класса
-        for (Candidate candidate : Database.getCandidateSet()) {
+        for (Candidate candidate : database.getCandidateSet()) {
             if (candidate.getVoter().getLogin().equals(login)) {
                 return true;
             }
@@ -60,7 +57,6 @@ public class CandidateDaoImpl implements CandidateDao<Candidate> {
      */
     @Override
     public void delete(Candidate candidate) {
-        //REVU: вынесите Database в отдельную переменную класса
-        Database.getCandidateSet().remove(candidate);
+        database.getCandidateSet().remove(candidate);
     }
 }

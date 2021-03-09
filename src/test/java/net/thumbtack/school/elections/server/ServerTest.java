@@ -1,93 +1,90 @@
-//package net.thumbtack.school.elections.server;
-//
-//import com.google.gson.Gson;
-//import net.thumbtack.school.elections.server.database.Database;
-//import net.thumbtack.school.elections.server.dto.request.*;
-//import net.thumbtack.school.elections.server.dto.response.*;
-//import net.thumbtack.school.elections.server.model.Candidate;
-//import net.thumbtack.school.elections.server.model.Commissioner;
-//import net.thumbtack.school.elections.server.model.Idea;
-//import net.thumbtack.school.elections.server.model.Voter;
-//import net.thumbtack.school.elections.server.service.*;
-//import org.junit.jupiter.api.Test;
-//import java.io.IOException;
-//import java.util.*;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//
-//public class TestServer {
-//    private final Gson gson = new Gson();
-//    private final Server server = new Server();
-//    private final Commissioner commissioner = new Commissioner("victor.net", "25345Qw&&", true);
-//    private static final String EMPTY_JSON = "";
-//    private static final String NULL_VALUE = "Некорректный запрос.";
-//    private static final String SESSION_NOT_FOUND = "Сессия пользователя не найдена.";
-//    private static final String NULL_REGISTERVOTERDTOREQUEST = "Пожалуйста, заполните все данные.";
-//    private static final String NULL_LOGINDTOREQUEST = "Пожалуйста, введите логин и пароль.";
-//    private static final String WRONG_FIRSTNAME =
-//            "Имя должно быть на кириллице, без пробелов, спец. символов и цифр.\n";
-//    private static final String WRONG_LASTNAME =
-//            "Фамилия должна быть на кириллице, без пробелов, спец. символов и цифр.\n";
-//    private static final String WRONG_PATRONYMIC =
-//            "Отчество должно быть на кириллице, без пробелов, спец. символов и цифр.\n";
-//    private static final String WRONG_STREET =
-//            "Название улицы должно быть на кириллице, без пробелов, спец. символов и цифр.\n";
-//    private static final String WRONG_HOUSE = "Номер дома не может быть меньше единицы.\n";
-//    private static final String WRONG_APARTMENT = "Номер квартиры не может быть меньше нуля.\n";
-//    private static final String WRONG_LOGIN = "Длинна логина должна быть не меньше 9 символо.\n";
-//    private static final String WRONG_PASSWORD =
-//            "Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву," +
-//            " цифру и один спец. символ, а его длинна не менее 9 символов, без пробелов.\n";
-//    private static final String ELECTION_START = "Выборы уже проходят, действие невозможно.";
+package net.thumbtack.school.elections.server;
+
+import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.database.Database;
+import net.thumbtack.school.elections.server.dto.request.*;
+import net.thumbtack.school.elections.server.dto.response.*;
+import net.thumbtack.school.elections.server.model.Candidate;
+import net.thumbtack.school.elections.server.model.Commissioner;
+import net.thumbtack.school.elections.server.model.Idea;
+import net.thumbtack.school.elections.server.model.Voter;
+import net.thumbtack.school.elections.server.service.*;
+import org.junit.jupiter.api.Test;
+import java.io.IOException;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ServerTest {
+    private final Gson gson = new Gson();
+    private final Server server = new Server();
+    private final Database database = Database.getInstance();
+    private final Commissioner commissioner = new Commissioner("victor.net", "25345Qw&&", true);
+    private static final String EMPTY_JSON = "";
+    private static final String NULL_VALUE = "Некорректный запрос.";
+    private static final String SESSION_NOT_FOUND = "Сессия пользователя не найдена.";
+    private static final String NULL_REGISTERVOTERDTOREQUEST = "Пожалуйста, заполните все данные.";
+    private static final String NULL_LOGINDTOREQUEST = "Пожалуйста, введите логин и пароль.";
+    private static final String WRONG_FIRSTNAME =
+            "Имя должно быть на кириллице, без пробелов, спец. символов и цифр.";
+    private static final String WRONG_LASTNAME =
+            "Фамилия должна быть на кириллице, без пробелов, спец. символов и цифр.";
+    private static final String WRONG_PATRONYMIC =
+            "Отчество должно быть на кириллице, без пробелов, спец. символов и цифр.";
+    private static final String WRONG_STREET =
+            "Название улицы должно быть на кириллице, без пробелов, спец. символов и цифр.";
+    private static final String WRONG_HOUSE = "Номер дома не может быть меньше единицы.";
+    private static final String WRONG_APARTMENT = "Номер квартиры не может быть меньше нуля.";
+    private static final String WRONG_LOGIN = "Длинна логина должна быть не меньше 9 символов.";
+    private static final String WRONG_PASSWORD =
+            "Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву," +
+                    " цифру и один спец. символ, а его длинна не менее 9 символов, без пробелов.";
+    private static final String ELECTION_START = "Выборы уже проходят, действие невозможно.";
 //    @Test
 //    public void startStopServerTest() throws IOException, ClassNotFoundException {
 //        server.startServer(null);
 //        assertAll(
-//                () -> assertNotNull(server.gson),
-//                () -> assertNotNull(server.contextService),
-//                () -> assertNotNull(server.sessionService),
-//                () -> assertNotNull(server.ideaService),
-//                () -> assertNotNull(server.candidateService),
-//                () -> assertNotNull(server.voterService),
-//                () -> assertNotNull(server.electionService),
-//                () -> assertNotNull(server.commissionerService)
+//                () -> assertNotNull(server.getGson()),
+//                () -> assertNotNull(server.getContextService()),
+//                () -> assertNotNull(server.getSessionService()),
+//                () -> assertNotNull(server.getIdeaService()),
+//                () -> assertNotNull(server.getCandidateService()),
+//                () -> assertNotNull(server.getVoterService()),
+//                () -> assertNotNull(server.getElectionService()),
+//                () -> assertNotNull(server.getCommissionerService())
 //        );
 //        server.stopServer(null);
 //        assertAll(
-//                () -> assertNull(server.gson),
-//                () -> assertNull(server.contextService),
-//                () -> assertNull(server.sessionService),
-//                () -> assertNull(server.ideaService),
-//                () -> assertNull(server.candidateService),
-//                () -> assertNull(server.voterService),
-//                () -> assertNull(server.commissionerService),
-//                () -> assertNull(server.electionService)
+//                () -> assertNull(server.getGson()),
+//                () -> assertNull(server.getContextService()),
+//                () -> assertNull(server.getSessionService()),
+//                () -> assertNull(server.getIdeaService()),
+//                () -> assertNull(server.getCandidateService()),
+//                () -> assertNull(server.getVoterService()),
+//                () -> assertNull(server.getCommissionerService()),
+//                () -> assertNull(server.getElectionService())
 //        );
 //        server.startServer(null);
-//        boolean isElectionStart = server.contextService.isElectionStart();
-//        Set<Candidate> candidateSet = Database.getCandidateSet();
-//        Set<Voter> voterSet = Database.getVoterSet();
-//        List<String> logins = Database.getLogins();
-//        CandidateService candidateService = server.candidateService;
-//        IdeaService ideaService = server.ideaService;
+//        boolean isElectionStart = server.getContextService().isElectionStart();
+//        Set<Candidate> candidateSet = database.getCandidateSet();
+//        Set<Voter> voterSet = database.getVoterSet();
+//        List<String> logins = database.getLogins();
 //        server.stopServer(
 //                "C:\\Thumbtack\\thumbtack_online_school_2020_2__viktor_khoroshev\\saveDataFile");
 //        server.startServer(
 //                "C:\\Thumbtack\\thumbtack_online_school_2020_2__viktor_khoroshev\\saveDataFile");
 //        assertAll(
-//                () -> assertEquals(candidateSet, Database.getCandidateSet()),
-//                () -> assertEquals(voterSet, Database.getVoterSet()),
-//                () -> assertEquals(logins, Database.getLogins()),
-//                () -> assertEquals(candidateService, server.candidateService),
-//                () -> assertEquals(ideaService, server.ideaService),
-//                () -> assertEquals(isElectionStart, server.contextService.isElectionStart())
+//                () -> assertEquals(candidateSet, database.getCandidateSet()),
+//                () -> assertEquals(voterSet, database.getVoterSet()),
+//                () -> assertEquals(logins, database.getLogins()),
+//                () -> assertEquals(isElectionStart, server.getContextService().isElectionStart())
 //        );
 //    }
 //
 //    @Test
 //    public void registerTest() throws IOException, ClassNotFoundException, ServerException {
 //        server.startServer(null);
-//        SessionService session = server.sessionService;
+//        SessionService session = server.getSessionService();
 //        RegisterDtoRequest request1 = new RegisterDtoRequest("Виктор", "Хорошев",
 //                null,"Пригородная", 1, 188, randomString(), "111%111Aa");
 //        RegisterDtoRequest request2 = new RegisterDtoRequest("викторр", "Хорошев",
@@ -196,11 +193,11 @@
 //                "-ап", -1, -234, "null", "1");
 //        assertAll(
 //                () -> assertEquals(server.register(gson.toJson(request1)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request1.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request1.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request2)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request2.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request2.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request3)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request3.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request3.newVoter())))),
 //                () -> assertEquals(server.register( gson.toJson(request4)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_FIRSTNAME))),
 //                () -> assertEquals(server.register(gson.toJson(request5)),
@@ -210,11 +207,11 @@
 //                () -> assertEquals(server.register(gson.toJson(request7)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_FIRSTNAME))),
 //                () -> assertEquals(server.register(gson.toJson(request8)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request8.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request8.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request9)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request9.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request9.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request10)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request10.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request10.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request11)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_LASTNAME))),
 //                () -> assertEquals(server.register(gson.toJson(request12)),
@@ -224,11 +221,11 @@
 //                () -> assertEquals(server.register(gson.toJson(request14)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_LASTNAME))),
 //                () -> assertEquals(server.register(gson.toJson(request15)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request15.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request15.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request16)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request16.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request16.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request17)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request17.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request17.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request18)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_PATRONYMIC))),
 //                () -> assertEquals(server.register(gson.toJson(request19)),
@@ -238,11 +235,11 @@
 //                () -> assertEquals(server.register(gson.toJson(request21)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_PATRONYMIC))),
 //                () -> assertEquals(server.register(gson.toJson(request22)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request22.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request22.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request23)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request23.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request23.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request24)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request24.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request24.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request25)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_STREET))),
 //                () -> assertEquals(server.register(gson.toJson(request26)),
@@ -252,29 +249,29 @@
 //                () -> assertEquals(server.register(gson.toJson(request28)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_STREET))),
 //                () -> assertEquals(server.register(gson.toJson(request29)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request29.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request29.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request30)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_HOUSE))),
 //                () -> assertEquals(server.register(gson.toJson(request31)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_HOUSE))),
 //                () -> assertEquals(server.register(gson.toJson(request32)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request32.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request32.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request33)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request33.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request33.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request34)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_APARTMENT))),
 //                () -> assertEquals(server.register(gson.toJson(request35)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_LOGIN))),
 //                () -> assertEquals(server.register(gson.toJson(request36)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request36.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request36.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request36)),
 //                        gson.toJson(new ErrorDtoResponse("Вы уже зарегестрированны."))),
 //                () -> assertEquals(server.register(gson.toJson(request37)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request37.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request37.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request38)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request38.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request38.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request39)),
-//                        gson.toJson(new RegisterDtoResponse(session.getSession(request39.newVoter()).getToken()))),
+//                        session.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(request39.newVoter())))),
 //                () -> assertEquals(server.register(gson.toJson(request40)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_PASSWORD))),
 //                () -> assertEquals(server.register(gson.toJson(request41)),
@@ -300,28 +297,24 @@
 //                () -> assertEquals(server.register(gson.toJson(request51)),
 //                        gson.toJson(new ErrorDtoResponse(NULL_REGISTERVOTERDTOREQUEST))),
 //                () -> assertEquals(server.register(gson.toJson(request52)),
-//                        gson.toJson(new ErrorDtoResponse(NULL_REGISTERVOTERDTOREQUEST))),
+//                        gson.toJson(new ErrorDtoResponse(NULL_VALUE))),
 //                () -> assertEquals(server.register(null),
-//                        gson.toJson(new ErrorDtoResponse(NULL_REGISTERVOTERDTOREQUEST))),
-//                () -> assertEquals(server.register(gson.toJson(request53)),
-//                        gson.toJson(new ErrorDtoResponse(WRONG_FIRSTNAME + WRONG_LASTNAME + WRONG_PATRONYMIC +
-//                                WRONG_STREET + WRONG_HOUSE + WRONG_APARTMENT + WRONG_LOGIN + WRONG_PASSWORD)))
+//                        gson.toJson(new ErrorDtoResponse(NULL_VALUE)))
 //        );
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
-//        StartElectionDtoRequest startRequest = new StartElectionDtoRequest(
-//                server.sessionService.getSession(commissioner).getToken());
+//        StartElectionDtoRequest startRequest = new StartElectionDtoRequest(server.getSessionService().getCommissionerSession(gson.toJson(new GetCommissionerSessionDtoRequest(commissioner))));
 //        server.startElection(gson.toJson(startRequest));
 //        RegisterDtoRequest request54 = new RegisterDtoRequest(randomString(), randomString(),
 //                randomString(),randomString(),1, 1, "login111111", "1qQ&2$$$$$$$");
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)), server.register(gson.toJson(request54)));
 //        server.startServer(null);
 //    }
-//    //TODO: МОККИТО
+
 //    @Test
 //    public void logoutTest() throws ServerException, IOException, ClassNotFoundException {
 //        server.startServer(null);
-//        SessionService session = server.sessionService;
+//        SessionService session = server.getSessionService();
 //        LoginDtoRequest loginDtoRequest = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(loginDtoRequest));
 //        RegisterDtoRequest registerDtoRequest = new RegisterDtoRequest(randomString(), randomString(),
@@ -330,7 +323,7 @@
 //                null,randomString(), 1, 188, randomString(), "111%111Aa");
 //        server.register(gson.toJson(registerDtoRequest));
 //        server.register(gson.toJson(registerDtoRequest1));
-//        server.candidateService.confirmationCandidacy(registerDtoRequest1.newVoter(),new ArrayList<>());
+//        server.getCandidateService().confirmationCandidacy(registerDtoRequest1.newVoter(),new ArrayList<>());
 //        LogoutDtoRequest request = new LogoutDtoRequest(session.getSession(registerDtoRequest.newVoter()).getToken());
 //        LogoutDtoRequest request1 = null;
 //        LogoutDtoRequest request2 = new LogoutDtoRequest(null);
@@ -353,7 +346,7 @@
 //    @Test
 //    public void loginTest() throws IOException, ClassNotFoundException, ServerException {
 //        server.startServer(null);
-//        SessionService session = server.sessionService;
+//        SessionService session = server.getSessionService();
 //        RegisterDtoRequest registerDtoRequest = new RegisterDtoRequest(randomString(), randomString(),
 //                null,randomString(), 1, 188, "login1111111", "111%111Aa");
 //        RegisterDtoRequest registerDtoRequest1 = new RegisterDtoRequest(randomString(), randomString(),
@@ -389,16 +382,16 @@
 //                () -> assertEquals(server.login(gson.toJson(loginDtoRequest6)),
 //                        gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_FOUND.getMessage()))),
 //                () -> assertEquals(server.login(gson.toJson(loginDtoRequest7)),
-//                        gson.toJson(new ErrorDtoResponse(NULL_LOGINDTOREQUEST))),
+//                        gson.toJson(new ErrorDtoResponse(NULL_VALUE))),
 //                () -> assertEquals(server.login(gson.toJson(loginDtoRequest8)),
-//                        gson.toJson(new ErrorDtoResponse(NULL_LOGINDTOREQUEST))),
+//                        gson.toJson(new ErrorDtoResponse(NULL_REGISTERVOTERDTOREQUEST))),
 //                () -> assertEquals(server.login(gson.toJson(loginDtoRequest9)),
 //                        gson.toJson(new ErrorDtoResponse(WRONG_LOGIN)))
 //        );
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.login(gson.toJson(new LoginDtoRequest(registerDtoRequest3.newVoter().getLogin(),
@@ -423,8 +416,8 @@
 //        voterSet.add(registerDtoRequest2.newVoter());
 //        assertAll(
 //                () -> assertEquals(server.getVoterList(gson.toJson(
-//                        new GetVoterListDtoRequest(server.sessionService.getSession(
-//                                server.voterService.get("loginNumber1")).getToken()))).length(),
+//                        new GetVoterListDtoRequest(server.getSessionService().getSession(
+//                                server.getVoterService().get("loginNumber1")).getToken()))).length(),
 //                        gson.toJson(new GetVotersListDtoResponse(voterSet)).length()),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.getVoterList(null)),
@@ -453,8 +446,8 @@
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.addCandidate(gson.toJson(
 //                        new AddCandidateDtoRequest(request2.newVoter().getLogin(),
-//                                server.sessionService.getSession(request1.newVoter()).getToken())))),
-//                () -> assertTrue(server.voterService.get("loginNumber1").isHasOwnCandidate()),
+//                                server.getSessionService().getSession(request1.newVoter()).getToken())))),
+//                () -> assertTrue(server.getVoterService().get("loginNumber1").isHasOwnCandidate()),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
 //                        server.addCandidate(gson.toJson(new AddCandidateDtoRequest(
 //                                request3.newVoter().getLogin(), "1")))),
@@ -462,7 +455,7 @@
 //                        server.addCandidate(null)),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.addCandidate(gson.toJson(new AddCandidateDtoRequest(
-//                                null, server.sessionService.getSession(request1.newVoter()).getToken())))),
+//                                null, server.getSessionService().getSession(request1.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.addCandidate(gson.toJson(new AddCandidateDtoRequest(
 //                                "loginNumber3" , null))))
@@ -470,11 +463,11 @@
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.addCandidate(gson.toJson(new AddCandidateDtoRequest(
-//                        request4.newVoter().getLogin(), server.sessionService.getSession(
+//                        request4.newVoter().getLogin(), server.getSessionService().getSession(
 //                                request4.newVoter()).getToken()))));
 //        server.stopServer(null);
 //    }
@@ -497,7 +490,7 @@
 //        text2.add("idea №3");
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.confirmationCandidacy(gson.toJson(new
-//                        ConfirmationCandidacyDtoRequest(server.sessionService.getSession(
+//                        ConfirmationCandidacyDtoRequest(server.getSessionService().getSession(
 //                                request1.newVoter()).getToken(), text1)))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
 //                        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
@@ -514,11 +507,11 @@
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest = new StartElectionDtoRequest(
-//                server.sessionService.getSession(commissioner).getToken());
+//                server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
-//                        server.sessionService.getSession(request2.newVoter()).getToken(), text2))));
+//                        server.getSessionService().getSession(request2.newVoter()).getToken(), text2))));
 //        server.stopServer(null);
 //    }
 //    @Test
@@ -535,30 +528,30 @@
 //        text1.add("idea №1");
 //        text2.add("idea №1");
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
-//                server.sessionService.getSession(request1.newVoter()).getToken(), text1)));
+//                server.getSessionService().getSession(request1.newVoter()).getToken(), text1)));
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
-//                server.sessionService.getSession(request2.newVoter()).getToken(), text2)));
+//                server.getSessionService().getSession(request2.newVoter()).getToken(), text2)));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.withdrawCandidacy(gson.toJson(
-//                        new WithdrawCandidacyRequest(server.sessionService.getSession(request1.newVoter()).getToken())))),
+//                        new WithdrawCandidacyDtoRequest(server.getSessionService().getSession(request1.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
-//                        server.withdrawCandidacy(gson.toJson(new WithdrawCandidacyRequest("1")))),
+//                        server.withdrawCandidacy(gson.toJson(new WithdrawCandidacyDtoRequest("1")))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.withdrawCandidacy(null)),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
-//                        server.withdrawCandidacy(gson.toJson(new WithdrawCandidacyRequest(null))))
+//                        server.withdrawCandidacy(gson.toJson(new WithdrawCandidacyDtoRequest(null))))
 //        );
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
-//                server.withdrawCandidacy(gson.toJson(new WithdrawCandidacyRequest(
-//                        server.sessionService.getSession(request2.newVoter()).getToken()))));
+//                server.withdrawCandidacy(gson.toJson(new WithdrawCandidacyDtoRequest(
+//                        server.getSessionService().getSession(request2.newVoter()).getToken()))));
 //        server.stopServer(null);
 //    }
-//    //TODO: МОККИТО
+//
 //    @Test
 //    public void addIdeaTest() throws IOException, ServerException, ClassNotFoundException {
 //        server.startServer(null);
@@ -571,19 +564,19 @@
 //        List<String> text = new ArrayList<>();
 //        text.add("idea №1");
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
-//                server.sessionService.getSession(request2.newVoter()).getToken(), text)));
+//                server.getSessionService().getSession(request2.newVoter()).getToken(), text)));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON ,server.addIdea(gson.toJson(
-//                        new AddIdeaDtoRequest("idea №2", server.sessionService.getSession(
+//                        new AddIdeaDtoRequest("idea №2", server.getSessionService().getSession(
 //                                request1.newVoter()).getToken())))),
 //                () -> assertEquals(EMPTY_JSON ,server.addIdea(gson.toJson(
-//                        new AddIdeaDtoRequest("idea №3", server.sessionService.getSession(
+//                        new AddIdeaDtoRequest("idea №3", server.getSessionService().getSession(
 //                                request2.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.addIdea(gson.toJson(null))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.addIdea(gson.toJson(new AddIdeaDtoRequest(
-//                                null, server.sessionService.getSession(request1.newVoter()).getToken())))),
+//                                null, server.getSessionService().getSession(request1.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea №4", null)))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
@@ -592,11 +585,11 @@
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.addIdea(gson.toJson(new AddIdeaDtoRequest(
-//                        "idea №4", server.sessionService.getSession(request1.newVoter()).getToken()))));
+//                        "idea №4", server.getSessionService().getSession(request1.newVoter()).getToken()))));
 //        server.stopServer(null);
 //    }
 //    @Test
@@ -612,33 +605,33 @@
 //        server.register(gson.toJson(request2));
 //        server.register(gson.toJson(request3));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea №1",
-//                server.sessionService.getSession(request1.newVoter()).getToken())));
+//                server.getSessionService().getSession(request1.newVoter()).getToken())));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.estimateIdea(gson.toJson(
-//                        new EstimateIdeaDtoRequest(server.voterService.get("loginNumber1").getLogin(), 1,
-//                                server.sessionService.getSession(request2.newVoter()).getToken())))),
+//                        new EstimateIdeaDtoRequest(server.getVoterService().get("loginNumber1").getLogin(), 1,
+//                                server.getSessionService().getSession(request2.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse("Оценка должна быть от 1 до 5.")),
 //                        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(
-//                                server.voterService.get("loginNumber1").getLogin(), 0,
-//                                server.sessionService.getSession(request2.newVoter()).getToken())))),
+//                                server.getVoterService().get("loginNumber1").getLogin(), 0,
+//                                server.getSessionService().getSession(request2.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.estimateIdea(gson.toJson(null))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(
-//                                null, 1, server.sessionService.getSession(request2.newVoter()).getToken())))),
+//                                null, 1, server.getSessionService().getSession(request2.newVoter()).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(
-//                                server.voterService.get("loginNumber1").getLogin(), 1, null))))
+//                                server.getVoterService().get("loginNumber1").getLogin(), 1, null))))
 //        );
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(
-//                        server.voterService.get("loginNumber1").getLogin(), 1,
-//                        server.sessionService.getSession(request3.newVoter()).getToken()))));
+//                        server.getVoterService().get("loginNumber1").getLogin(), 1,
+//                        server.getSessionService().getSession(request3.newVoter()).getToken()))));
 //        server.stopServer(null);
 //    }
 //    @Test
@@ -650,22 +643,22 @@
 //                null, randomString(), 1, 1, "loginNumber2", "111^wW1234");
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea №1", token1)));
 //        server.estimateIdea(gson.toJson(
-//                new EstimateIdeaDtoRequest(server.voterService.get("loginNumber1").getLogin(), 1, token2)));
+//                new EstimateIdeaDtoRequest(server.getVoterService().get("loginNumber1").getLogin(), 1, token2)));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.changeRating(gson.toJson(new ChangeRatingDtoRequest(token2,
-//                        server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"), 5)))),
+//                        server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"), 5)))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse("Оценка должна быть от 1 до 5.")),
-//                        server.changeRating(gson.toJson(new ChangeRatingDtoRequest(token2, server.ideaService.getKey(
-//                                server.sessionService.getVoter(token1), "idea №1"), 0)))),
+//                        server.changeRating(gson.toJson(new ChangeRatingDtoRequest(token2, server.getIdeaService().getKey(
+//                                server.getSessionService().getVoter(token1), "idea №1"), 0)))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.changeRating(gson.toJson(null))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.changeRating(gson.toJson(new ChangeRatingDtoRequest(
-//                                null, server.ideaService.getKey(server.sessionService.getVoter(token1),
+//                                null, server.getIdeaService().getKey(server.getSessionService().getVoter(token1),
 //                                "idea №1"), 5)))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.changeRating(gson.toJson(new ChangeRatingDtoRequest(token2, null, 5))))
@@ -673,11 +666,11 @@
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.changeRating(gson.toJson(new ChangeRatingDtoRequest(token2,
-//                        server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"), 4))));
+//                        server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"), 4))));
 //        server.stopServer(null);
 //    }
 //    @Test
@@ -689,35 +682,35 @@
 //                null, randomString(), 1, 1, "loginNumber2", "111^wW1234");
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea №1", token1)));
-//        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(server.voterService.get("loginNumber1").getLogin(), 1, token2)));
+//        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(server.getVoterService().get("loginNumber1").getLogin(), 1, token2)));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.removeRating(gson.toJson(
 //                        new RemoveRatingDtoRequest(token2,
-//                                server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"))))),
+//                                server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"))))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
 //                        server.removeRating(gson.toJson(new RemoveRatingDtoRequest("1",
-//                                server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"))))),
+//                                server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"))))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.removeRating(gson.toJson(null))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.removeRating(gson.toJson(new RemoveRatingDtoRequest(null,
-//                                server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"))))),
+//                                server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"))))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.removeRating(gson.toJson(new RemoveRatingDtoRequest(token2, null))))
 //        );
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.estimateIdea(gson.toJson(
-//                new EstimateIdeaDtoRequest(server.voterService.get("loginNumber1").getLogin(), 1, token2)));
+//                new EstimateIdeaDtoRequest(server.getVoterService().get("loginNumber1").getLogin(), 1, token2)));
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.removeRating(gson.toJson(new RemoveRatingDtoRequest(token2,
-//                        server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1")))));
+//                        server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1")))));
 //        server.stopServer(null);
 //    }
 //    @Test
@@ -729,33 +722,33 @@
 //                null, randomString(), 1, 1, "loginNumber2", "111^wW1234");
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea №1", token1)));
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(token2, new ArrayList<>())));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.takeIdea(gson.toJson(
-//                        new TakeIdeaDtoRequest(token2, server.ideaService.getKey(server.sessionService.getVoter(token1),
+//                        new TakeIdeaDtoRequest(token2, server.getIdeaService().getKey(server.getSessionService().getVoter(token1),
 //                                "idea №1"))))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.takeIdea(gson.toJson(null))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.takeIdea(gson.toJson(new TakeIdeaDtoRequest(null,
-//                                server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"))))),
+//                                server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"))))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
 //                        server.takeIdea(gson.toJson(new TakeIdeaDtoRequest("1",
-//                                server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1"))))),
+//                                server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1"))))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.takeIdea(gson.toJson(new TakeIdeaDtoRequest(token2, null))))
 //        );
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.takeIdea(gson.toJson(new TakeIdeaDtoRequest(token2,
-//                        server.ideaService.getKey(server.sessionService.getVoter(token1), "idea №1")))));
+//                        server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea №1")))));
 //        server.stopServer(null);
 //    }
 //    @Test
@@ -767,11 +760,11 @@
 //                null, randomString(), 1, 1, "loginNumber2", "111^wW1234");
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(token1, new ArrayList<>())));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 1", token2)));
-//        String ideaKey = server.ideaService.getKey(server.sessionService.getVoter(token2), "idea 1");
+//        String ideaKey = server.getIdeaService().getKey(server.getSessionService().getVoter(token2), "idea 1");
 //        server.takeIdea(gson.toJson(new TakeIdeaDtoRequest(token1, ideaKey)));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON , server.removeIdea(gson.toJson(
@@ -786,11 +779,11 @@
 //                        server.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(token1, null))))
 //        );
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 2", token2)));
-//        String ideaKey1 = server.ideaService.getKey(server.sessionService.getVoter(token2), "idea 2");
+//        String ideaKey1 = server.getIdeaService().getKey(server.getSessionService().getVoter(token2), "idea 2");
 //        LoginDtoRequest request = new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword());
 //        server.login(gson.toJson(request));
 //        StartElectionDtoRequest startRequest =
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken());
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken());
 //        server.startElection(gson.toJson(startRequest));
 //        assertEquals(gson.toJson(new ErrorDtoResponse(ELECTION_START)),
 //                server.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(token1, ideaKey1))));
@@ -808,14 +801,14 @@
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
 //        server.register(gson.toJson(request3));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
-//        String token3 = server.sessionService.getSession(request3.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
+//        String token3 = server.getSessionService().getSession(request3.newVoter()).getToken();
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(token1, new ArrayList<>())));
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(token2, new ArrayList<>())));
 //        assertAll(
 //                () -> assertEquals(gson.toJson(
-//                        new GetCandidateMapDtoResponse(server.candidateService.getCandidateMap())),
+//                        new GetCandidateMapDtoResponse(server.getCandidateService().getCandidateMap())),
 //                        server.getCandidatesMap(gson.toJson(new GetCandidateMapDtoRequest(token3)))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(SESSION_NOT_FOUND)),
 //                        server.getCandidatesMap(gson.toJson(new GetCandidateMapDtoRequest("1")))),
@@ -835,21 +828,21 @@
 //                null, randomString(), 1, 1, "loginNumber2", "111^wW1234");
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 1", token1)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 2", token1)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 3", token1)));
-//        String ideaKey1 = server.ideaService.getKey(server.sessionService.getVoter(token1), "idea 1");
-//        String ideaKey2 = server.ideaService.getKey(server.sessionService.getVoter(token1), "idea 2");
-//        String ideaKey3 = server.ideaService.getKey(server.sessionService.getVoter(token1), "idea 3");
+//        String ideaKey1 = server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea 1");
+//        String ideaKey2 = server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea 2");
+//        String ideaKey3 = server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea 3");
 //        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(ideaKey1, 5, token2)));
 //        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(ideaKey2, 3, token2)));
 //        server.estimateIdea(gson.toJson(new EstimateIdeaDtoRequest(ideaKey3, 1, token2)));
 //        Map<Idea, Float> map = new TreeMap<>();
-//        map.put(server.ideaService.getIdea(ideaKey1), 5f);
-//        map.put(server.ideaService.getIdea(ideaKey2), 4f);
-//        map.put(server.ideaService.getIdea(ideaKey3), 3f);
+//        map.put(server.getIdeaService().getIdea(ideaKey1), 5f);
+//        map.put(server.getIdeaService().getIdea(ideaKey2), 4f);
+//        map.put(server.getIdeaService().getIdea(ideaKey3), 3f);
 //        assertAll(
 //                () -> assertEquals(gson.toJson(new GetAllIdeasDtoResponse(map)),
 //                        server.getAllIdeas(gson.toJson(new GetAllIdeasDtoRequest(token2)))),
@@ -871,23 +864,23 @@
 //                null, randomString(), 1, 1, "loginNumber2", "111^wW1234");
 //        server.register(gson.toJson(request1));
 //        server.register(gson.toJson(request2));
-//        String token1 = server.sessionService.getSession(request1.newVoter()).getToken();
-//        String token2 = server.sessionService.getSession(request2.newVoter()).getToken();
+//        String token1 = server.getSessionService().getSession(request1.newVoter()).getToken();
+//        String token2 = server.getSessionService().getSession(request2.newVoter()).getToken();
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 1", token1)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 2", token1)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 3", token1)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 4", token2)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 5", token2)));
 //        server.addIdea(gson.toJson(new AddIdeaDtoRequest("idea 6", token2)));
-//        String ideaKey1 = server.ideaService.getKey(server.sessionService.getVoter(token1), "idea 1");
-//        String ideaKey2 = server.ideaService.getKey(server.sessionService.getVoter(token1), "idea 2");
-//        String ideaKey3 = server.ideaService.getKey(server.sessionService.getVoter(token1), "idea 3");
+//        String ideaKey1 = server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea 1");
+//        String ideaKey2 = server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea 2");
+//        String ideaKey3 = server.getIdeaService().getKey(server.getSessionService().getVoter(token1), "idea 3");
 //        List<String> strings = new ArrayList<>();
 //        strings.add(request1.newVoter().getLogin());
 //        List<Idea> list = new ArrayList<>();
-//        list.add(server.ideaService.getIdea(ideaKey1));
-//        list.add(server.ideaService.getIdea(ideaKey2));
-//        list.add(server.ideaService.getIdea(ideaKey3));
+//        list.add(server.getIdeaService().getIdea(ideaKey1));
+//        list.add(server.getIdeaService().getIdea(ideaKey2));
+//        list.add(server.getIdeaService().getIdea(ideaKey3));
 //        assertAll(
 //                () -> assertEquals(gson.toJson(new GetAllVotersIdeasDtoResponse(list)),
 //                        server.getAllVotersIdeas(gson.toJson(new GetAllVotersIdeasDtoRequest(token1, strings)))),
@@ -929,34 +922,34 @@
 //        server.register(gson.toJson(voter3));
 //        server.register(gson.toJson(voter4));
 //        server.confirmationCandidacy(gson.toJson(
-//                new ConfirmationCandidacyDtoRequest(server.sessionService.getSession(voter1.newVoter()).getToken(),
+//                new ConfirmationCandidacyDtoRequest(server.getSessionService().getSession(voter1.newVoter()).getToken(),
 //                        new ArrayList<>())));
 //        server.confirmationCandidacy(gson.toJson(
-//                new ConfirmationCandidacyDtoRequest(server.sessionService.getSession(voter2.newVoter()).getToken(),
+//                new ConfirmationCandidacyDtoRequest(server.getSessionService().getSession(voter2.newVoter()).getToken(),
 //                        new ArrayList<>())));
 //        assertEquals(gson.toJson(new ErrorDtoResponse("Голосование не началось.")),
-//                server.vote(gson.toJson(new VoteDtoRequest(server.sessionService.getSession(voter3.newVoter()).getToken(),
+//                server.vote(gson.toJson(new VoteDtoRequest(server.getSessionService().getSession(voter3.newVoter()).getToken(),
 //                        "login1111111"))));
 //        server.login(gson.toJson(new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword())));
 //        server.startElection(gson.toJson(
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken())));
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken())));
 //        assertAll(
 //                () -> assertEquals(EMPTY_JSON, server.vote(gson.toJson(
-//                        new VoteDtoRequest(server.sessionService.getSession(voter3.newVoter()).getToken(),
+//                        new VoteDtoRequest(server.getSessionService().getSession(voter3.newVoter()).getToken(),
 //                                "login1111111")))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse("Кандидат не найден.")),
 //                        server.vote(gson.toJson(new VoteDtoRequest(
-//                                server.sessionService.getSession(voter3.newVoter()).getToken(),
+//                                server.getSessionService().getSession(voter3.newVoter()).getToken(),
 //                                "login11112111")))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.vote(gson.toJson(new VoteDtoRequest(null , "login1111111")))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
 //                        server.vote(gson.toJson(null)))
 //        );
-//        server.contextService.setIsElectionStop(true);
+//        server.getContextService().setIsElectionStop(true);
 //        assertEquals(gson.toJson(new ErrorDtoResponse("Голосование закончилось.")),
 //                server.vote(gson.toJson(
-//                        new VoteDtoRequest(server.sessionService.getSession(voter4.newVoter()).getToken(),
+//                        new VoteDtoRequest(server.getSessionService().getSession(voter4.newVoter()).getToken(),
 //                                "login1111111"))));
 //        server.stopServer(null);
 //    }
@@ -980,13 +973,13 @@
 //        server.register(gson.toJson(registerDtoRequest3));
 //        server.register(gson.toJson(registerDtoRequest4));
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
-//                server.sessionService.getSession(voter1).getToken(), new ArrayList<>())));
+//                server.getSessionService().getSession(voter1).getToken(), new ArrayList<>())));
 //        server.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(
-//                server.sessionService.getSession(voter2).getToken(), new ArrayList<>())));
+//                server.getSessionService().getSession(voter2).getToken(), new ArrayList<>())));
 //        server.login(gson.toJson(new LoginDtoRequest(commissioner.getLogin(), commissioner.getPassword())));
 //        server.startElection(gson.toJson(
-//                new StartElectionDtoRequest(server.sessionService.getSession(commissioner).getToken())));
-//        server.vote(gson.toJson(new VoteDtoRequest(server.sessionService.getSession(voter3).getToken(),
+//                new StartElectionDtoRequest(server.getSessionService().getSession(commissioner).getToken())));
+//        server.vote(gson.toJson(new VoteDtoRequest(server.getSessionService().getSession(voter3).getToken(),
 //                "login1111111")));
 //        Set<Candidate> candidateSet = new HashSet<>();
 //        voter1.setHasOwnCandidate(true);
@@ -994,7 +987,7 @@
 //        assertAll(
 //                () -> assertEquals(gson.toJson(new GetElectionResultDtoResponse(candidateSet)),
 //                        server.getElectionResult(gson.toJson(new GetElectionResultDtoRequest(
-//                                server.sessionService.getSession(commissioner).getToken())))),
+//                                server.getSessionService().getSession(commissioner).getToken())))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse("Вы не председатель коммиссии.")),
 //                        server.getElectionResult(gson.toJson(new GetElectionResultDtoRequest("1")))),
 //                () -> assertEquals(gson.toJson(new ErrorDtoResponse(NULL_VALUE)),
@@ -1004,14 +997,14 @@
 //        );
 //        server.stopServer(null);
 //    }
-//
-//    private String randomString() {
-//        Random random = new Random();
-//        char[] sAlphabet = "АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзиклмнопрстуфхцчшщъыьэюя".toCharArray();
-//        StringBuilder stringBuilder = new StringBuilder();
-//        for (int i = 0; i < 60; i++) {
-//            stringBuilder.append(sAlphabet[random.nextInt(sAlphabet.length)]);
-//        }
-//        return stringBuilder.toString();
-//    }
-//}
+
+    private String randomString() {
+        Random random = new Random();
+        char[] sAlphabet = "АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзиклмнопрстуфхцчшщъыьэюя".toCharArray();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < 60; i++) {
+            stringBuilder.append(sAlphabet[random.nextInt(sAlphabet.length)]);
+        }
+        return stringBuilder.toString();
+    }
+}

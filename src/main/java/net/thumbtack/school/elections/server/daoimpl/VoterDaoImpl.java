@@ -7,25 +7,29 @@ import net.thumbtack.school.elections.server.service.ServerException;
 import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
 import java.util.*;
 
-public class VoterDaoImpl implements VoterDao<Voter> {
+public class VoterDaoImpl implements VoterDao {
+    private final Database database;
+
+    public VoterDaoImpl() {
+        database = Database.getInstance();
+    }
 
     /**
      * Get voter by his login from database.
      * @param login the login voter, who already logged out from the server.
-     * @return The voter who owns this login.
-     * @throws ServerException if login not found in database voter set.
+     * @return The voter who owns this login or null if voter not found.
      */
+
     @Override
-    public Voter get(String login) throws ServerException {
+    public Voter get(String login) {
         Voter voter;
-        for (Voter value : Database.getVoterSet()) {
+        for (Voter value : database.getVoterSet()) {
             voter = value;
             if (voter.getLogin().equals(login)) {
                 return voter;
             }
         }
-        //REVU: это ошибка сервис уровня, дао просто должно вернуть null
-        throw new ServerException(ExceptionErrorCode.NOT_FOUND);
+        return null;
     }
 
     /**
@@ -34,7 +38,7 @@ public class VoterDaoImpl implements VoterDao<Voter> {
      */
     @Override
     public Set<Voter> getAll() {
-        return Database.getVoterSet();
+        return database.getVoterSet();
     }
 
     /**
@@ -43,16 +47,17 @@ public class VoterDaoImpl implements VoterDao<Voter> {
      * @throws ServerException if voter already contain in database or his login already exists.
      */
     @Override
-    public void save(Voter voter) throws ServerException {
-        if (Database.getVoterSet().contains(voter)){
+    public Voter save(Voter voter) throws ServerException {
+        if (database.getVoterSet().contains(voter)){
             throw new ServerException(ExceptionErrorCode.ALREADY_EXISTS);
         }
-        for (String s : Database.getLogins()) {
+        for (String s : database.getLogins()) {
             if (voter.getLogin().equals(s)) {
                 throw new ServerException(ExceptionErrorCode.LOGIN_ALREADY_EXISTS);
             }
         }
-        Database.getVoterSet().add(voter);
-        Database.getLogins().add(voter.getLogin());
+        database.getVoterSet().add(voter);
+        database.getLogins().add(voter.getLogin());
+        return voter;
     }
 }

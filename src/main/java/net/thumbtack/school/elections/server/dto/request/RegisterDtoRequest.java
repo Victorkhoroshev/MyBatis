@@ -2,7 +2,6 @@ package net.thumbtack.school.elections.server.dto.request;
 
 import net.thumbtack.school.elections.server.model.Voter;
 import org.jetbrains.annotations.Nullable;
-import java.util.regex.Pattern;
 
 public class RegisterDtoRequest {
     private final String firstName;
@@ -28,59 +27,38 @@ public class RegisterDtoRequest {
         this.password = password;
     }
 
-    public boolean isFirstNameValid() {
-        return isStringValid(firstName);
+    public String getFirstName() {
+        return firstName;
     }
 
-    public boolean isLastNameValid() {
-        return isStringValid(lastName);
+    public String getLastName() {
+        return lastName;
+    }
+    @Nullable
+    public String getPatronymic() {
+        return patronymic;
     }
 
-    public boolean isPatronymicValid() {
-        return patronymic == null || isStringValid(patronymic);
+    public String getStreet() {
+        return street;
     }
 
-    public boolean isStreetValid() {
-        return isStringValid(street);
+    public Integer getHouse() {
+        return house;
     }
 
-    private boolean isStringValid(String s) {
-        return s.matches("[а-яА-Я]+");
+    @Nullable
+    public Integer getApartment() {
+        return apartment;
     }
 
-    public boolean isHouseValid() {
-        return house > 0;
+    public String getLogin() {
+        return login;
     }
 
-    public boolean isApartmentValid() {
-        return apartment== null || apartment >= 0;
+    public String getPassword() {
+        return password;
     }
-
-    public boolean isLoginValid() {
-        return login.length() > 8;
-    }
-
-    public boolean isPasswordValid() {
-        return passwordValidation(password);
-    }
-
-    static boolean passwordValidation(String password) {
-        Pattern[] patterns = new Pattern[] {Pattern.compile("^(?=.*[a-zа-я]).+$"),
-                Pattern.compile("^(?=.*[A-ZА-Я]).+$"),
-                Pattern.compile(".*\\d.*"), Pattern.compile(".*\\W.*")};
-        for (Pattern pattern: patterns) {
-            if (!pattern.matcher(password).matches() || password.length() < 9 || password.matches(".*\\s.*")) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean requiredFieldsIsNotNull() {
-        return firstName != null && lastName != null && street != null &&
-                house != null && login != null && password != null;
-    }
-
 
     public Voter newVoter() {
         return new Voter(firstName, lastName, patronymic, street, house, apartment, login, password);

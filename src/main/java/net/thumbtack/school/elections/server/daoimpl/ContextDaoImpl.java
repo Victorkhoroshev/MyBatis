@@ -9,7 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ContextDaoImpl implements ContextDao<Context> {
+public class ContextDaoImpl implements ContextDao {
+    private final Database database = Database.getInstance();
 
     /**
      * Create new candidate's set, new voter's set, new login's set and already filled with three commissioner: commissioner's set.
@@ -23,10 +24,10 @@ public class ContextDaoImpl implements ContextDao<Context> {
         logins.add("victor@khoroshev.net");
         logins.add("egor@khoroshev.net");
         logins.add("igor@khoroshev.net");
-        Database.setCandidateSet(new HashSet<>());
-        Database.setVoterSet(new HashSet<>());
-        Database.setLogins(logins);
-        Database.setCommissionerSet(commissionerSet);
+        database.setCandidateSet(new HashSet<>());
+        database.setVoterSet(new HashSet<>());
+        database.setLogins(logins);
+        database.setCommissionerSet(commissionerSet);
     }
 
     /**
@@ -34,10 +35,10 @@ public class ContextDaoImpl implements ContextDao<Context> {
      * @param context previous state of program.
      */
     public ContextDaoImpl(Context context) {
-        Database.setCandidateSet(context.getCandidateSet());
-        Database.setVoterSet(context.getVoterSet());
-        Database.setLogins(context.getLogins());
-        Database.setCommissionerSet(context.getCommissionerSet());
+        database.setCandidateSet(context.getCandidateSet());
+        database.setVoterSet(context.getVoterSet());
+        database.setLogins(context.getLogins());
+        database.setCommissionerSet(context.getCommissionerSet());
     }
 
     /**
@@ -46,9 +47,9 @@ public class ContextDaoImpl implements ContextDao<Context> {
      */
     @Override
     public void sync(Context context) {
-        context.setCandidateSet(Database.getCandidateSet());
-        context.setVoterSet(Database.getVoterSet());
-        context.setLogins(Database.getLogins());
-        context.setCommissionerSet(Database.getCommissionerSet());
+        context.setCandidateSet(database.getCandidateSet());
+        context.setVoterSet(database.getVoterSet());
+        context.setLogins(database.getLogins());
+        context.setCommissionerSet(database.getCommissionerSet());
     }
 }

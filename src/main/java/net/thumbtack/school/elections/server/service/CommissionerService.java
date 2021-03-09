@@ -1,23 +1,35 @@
 package net.thumbtack.school.elections.server.service;
 
+import com.google.gson.Gson;
 import net.thumbtack.school.elections.server.dao.CommissionerDao;
 import net.thumbtack.school.elections.server.daoimpl.CommissionerDaoImpl;
-import net.thumbtack.school.elections.server.model.Candidate;
+import net.thumbtack.school.elections.server.dto.request.*;
+import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
+import net.thumbtack.school.elections.server.dto.response.GetCommissionerDtoResponse;
+import net.thumbtack.school.elections.server.dto.response.GetElectionResultDtoResponse;
 import net.thumbtack.school.elections.server.model.Commissioner;
+
 import java.util.List;
-import java.util.Set;
 
 public class CommissionerService {
-    private final CommissionerDao<Commissioner> dao;
+    private final CommissionerDao dao;
     private final SessionService sessionService;
     private final ElectionService electionService;
     private final ContextService contextService;
+    private final Validation validation;
+    private final Gson gson;
+    private final CandidateService candidateService;
 
-    public CommissionerService(SessionService sessionService, ElectionService electionService, ContextService contextService) {
-        dao = new CommissionerDaoImpl();
+    private static final String NULL_VALUE = "Некорректный запрос.";
+
+    public CommissionerService(SessionService sessionService, ElectionService electionService, ContextService contextService, Gson gson, CandidateService candidateService) {
         this.sessionService = sessionService;
         this.electionService = electionService;
         this.contextService = contextService;
+        this.gson = gson;
+        this.candidateService = candidateService;
+        dao = new CommissionerDaoImpl();
+        validation = new Validation();
     }
 
     /**
@@ -27,15 +39,25 @@ public class CommissionerService {
      * @return Unique commissioner's id.
      * @throws ServerException if login not found or password incorrect for login or election start.
      */
-    public String login(String login, String password) throws ServerException {
-        if (!contextService.isElectionStart()) {
-            Commissioner commissioner = dao.get(login);
-            if (!commissioner.getPassword().equals(password)) {
-                throw new ServerException(ExceptionErrorCode.WRONG_PASSWORD);
+    public String login(String requestJsonString) {
+        if (contextService.isElectionStart()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage()));
+        }
+        LoginDtoRequest request = gson.fromJson(requestJsonString, LoginDtoRequest.class);
+        try {
+            validation.validate(request.getLogin(), request.getPassword());
+            Commissioner commissioner = dao.get(request.getLogin());
+            if (commissioner == null) {
+                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_FOUND.getMessage()));
             }
-            return sessionService.login(commissioner);
-        } else {
-            throw new ServerException(ExceptionErrorCode.ELECTION_START);
+            if (!commissioner.getPassword().equals(request.getPassword())) {
+                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.WRONG_PASSWORD.getMessage()));
+            }
+            return sessionService.loginCommissioner(gson.toJson(new LoginCommissionerDtoRequest(commissioner)));
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
@@ -45,16 +67,25 @@ public class CommissionerService {
      * @return If commissioner's session exist: true.
      * If commissioner's session not exist: false.
      */
-    public boolean isCommissioner(String token) {
-        return sessionService.getCommissioner(token) != null;
+    public boolean isCommissioner(String requestJsonString) {
+        IsCommissionerDtoRequest request = gson.fromJson(requestJsonString, IsCommissionerDtoRequest.class);
+        return dao.contain(request.getLogin());
     }
 
     /**
      * Logout commissioner.
      * @param token unique commissioner's id.
      */
-    public void logout(String token) {
-        sessionService.logoutCommissioner(token);
+    public String logout(String requestJsonString) {
+        LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
+        try {
+            validation.validate(request.getToken());
+            return sessionService.logoutCommissioner(requestJsonString);
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        }
     }
 
     /**
@@ -63,11 +94,22 @@ public class CommissionerService {
      * @param candidateSet set candidates, who confirmed their candidacy.
      * @throws ServerException if the token does not belong to chairman.
      */
-    public void startElection(String token, Set<Candidate> candidateSet) throws ServerException {
-        if (sessionService.getCommissioner(token) == null || !sessionService.getCommissioner(token).isChairman()) {
-            throw new ServerException(ExceptionErrorCode.NOT_CHAIRMAN);
+    public String startElection(String requestJsonString) {
+        StartElectionDtoRequest request = gson.fromJson(requestJsonString, StartElectionDtoRequest.class);
+        try {
+            validation.validate(request.getToken());
+            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(gson.toJson(
+                    new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
+            if (!getCommissionerDtoResponse.getCommissioner().isChairman()) {
+                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage()));
+            }
+            return  electionService.startElection(gson.toJson(
+                    new CommissionerStartElectionDtoRequest(candidateService.getCandidateSet())));
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
-        electionService.startElection(candidateSet);
     }
 
     /**
@@ -77,15 +119,32 @@ public class CommissionerService {
      * @return Candidates set.
      * @throws ServerException if the token does not belong to chairman.
      */
-    public Set<Candidate> getElectionResult(String token) throws ServerException {
-        if (sessionService.getCommissioner(token) != null && sessionService.getCommissioner(token).isChairman()) {
+    public String getElectionResult(String requestJsonString) {
+        GetElectionResultDtoRequest request = gson.fromJson(requestJsonString, GetElectionResultDtoRequest.class);
+        try {
+            validation.validate(request.getToken());
+            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(gson.toJson(
+                    new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
+            if (!getCommissionerDtoResponse.getCommissioner().isChairman()) {
+                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage()));
+            }
             return electionService.getElectionResult();
-        } else {
-            throw new ServerException(ExceptionErrorCode.NOT_CHAIRMAN);
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
-    public List<String> getLogins() {
-        return dao.getLogins();
+    public SessionService getSessionService() {
+        return sessionService;
+    }
+
+    public ElectionService getElectionService() {
+        return electionService;
+    }
+
+    public ContextService getContextService() {
+        return contextService;
     }
 }

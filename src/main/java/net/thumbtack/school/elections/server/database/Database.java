@@ -5,44 +5,52 @@ import net.thumbtack.school.elections.server.model.Commissioner;
 import net.thumbtack.school.elections.server.model.Voter;
 import java.util.*;
 
-public final class Database {
-    private static Set<Candidate> candidateSet;
-    private static Set<Voter> voterSet;
-    private static List<String> logins;
-    private static Set<Commissioner> commissionerSet;
+public class Database {
+    private Set<Candidate> candidateSet;
+    private Set<Voter> voterSet;
+    private List<String> logins;
+    private Set<Commissioner> commissionerSet;
+    private static Database instance;
 
-    private Database() {
+    public static Database getInstance() {
+        if (instance == null) {
+            instance = new Database();
+            instance.setCandidateSet(new HashSet<>());
+            instance.setVoterSet(new HashSet<>());
+            instance.setLogins(new ArrayList<>());
+            instance.setCommissionerSet(new HashSet<>());
+        }
+        return instance;
     }
-
-    public static Set<Commissioner> getCommissionerSet() {
+    public Set<Commissioner> getCommissionerSet() {
         return commissionerSet;
     }
 
-    public static Set<Candidate> getCandidateSet() {
+    public Set<Candidate> getCandidateSet() {
         return candidateSet;
     }
 
-    public static Set<Voter> getVoterSet() {
+    public Set<Voter> getVoterSet() {
         return voterSet;
     }
 
-    public static List<String> getLogins() {
+    public List<String> getLogins() {
         return logins;
     }
 
-    public static void setCommissionerSet(Set<Commissioner> commissionerSet) {
-        Database.commissionerSet = commissionerSet;
+    public void setCommissionerSet(Set<Commissioner> commissionerSet) {
+        this.commissionerSet = commissionerSet;
     }
 
-    public static void setCandidateSet(Set<Candidate> candidateSet) {
-        Database.candidateSet = candidateSet;
+    public void setCandidateSet(Set<Candidate> candidateSet) {
+        this.candidateSet = candidateSet;
     }
 
-    public static void setVoterSet(Set<Voter> voterSet) {
-        Database.voterSet = voterSet;
+    public void setVoterSet(Set<Voter> voterSet) {
+        this.voterSet = voterSet;
     }
 
-    public static void setLogins(List<String> logins) {
-        Database.logins = logins;
+    public void setLogins(List<String> logins) {
+        this.logins = logins;
     }
 }

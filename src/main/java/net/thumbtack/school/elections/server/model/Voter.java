@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.util.Locale;
 import java.util.Objects;
 
-public class Voter implements Serializable {
+public class Voter extends User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String firstName;
@@ -14,11 +14,10 @@ public class Voter implements Serializable {
     private final String street;
     private final Integer house;
     private final @Nullable Integer apartment;
-    private final String login;
-    private final String password;
     private boolean isHasOwnCandidate;
 
     public Voter (String firstName, String lastName, @Nullable String patronymic, String street, Integer house, @Nullable Integer apartment, String login, String password) {
+        super(login, password);
         this.firstName = firstName.toLowerCase(Locale.ROOT);
         this.lastName = lastName.toLowerCase(Locale.ROOT);
         //REVU:вынесите эту логику в сеттер
@@ -30,10 +29,8 @@ public class Voter implements Serializable {
         this.street = street.toLowerCase(Locale.ROOT);
         this.house = house;
         this.apartment = apartment;
-        this.login = login;
-        this.password = password;
         //REVU: по умолчанию boolean переменная и так равна false, может не имеет смысла ее выставлять
-        setHasOwnCandidate(false);
+//        setHasOwnCandidate(false);
     }
 
     public Voter (String firstName, String lastName, String street, Integer house,
@@ -58,16 +55,24 @@ public class Voter implements Serializable {
         return lastName;
     }
 
-    public String getLogin() {
-        return login;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
     public boolean isHasOwnCandidate() {
         return isHasOwnCandidate;
+    }
+
+    public @Nullable String getPatronymic() {
+        return patronymic;
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public Integer getHouse() {
+        return house;
+    }
+
+    public @Nullable Integer getApartment() {
+        return apartment;
     }
 
     public void setHasOwnCandidate(boolean hasOwnCandidate) {

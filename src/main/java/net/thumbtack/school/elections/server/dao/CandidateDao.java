@@ -1,16 +1,14 @@
 package net.thumbtack.school.elections.server.dao;
 
+import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.service.ServerException;
-//REVU: я думаю, что здесь дженерики не нужны
-public interface CandidateDao<T> {
+public interface CandidateDao {
 
-    //REVU: я думаю, что здесь дженерики не нужны
-    T get(String s) throws ServerException;
+    Candidate get(String s) throws ServerException;
 
-    //REVU: обычно при save\add возвращают сущность
-    void save(T t);
+    Candidate save(Candidate candidate);
 
     boolean contains(String s);
 
-    void delete(T t);
+    void delete(Candidate t);
 }

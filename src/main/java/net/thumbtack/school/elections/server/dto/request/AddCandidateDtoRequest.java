@@ -4,7 +4,7 @@ public class AddCandidateDtoRequest {
     private String candidateLogin;
     private String token;
 
-    public AddCandidateDtoRequest(String candidateLogin, String token) {
+    public AddCandidateDtoRequest(String token, String candidateLogin) {
         setCandidateLogin(candidateLogin);
         setToken(token);
     }

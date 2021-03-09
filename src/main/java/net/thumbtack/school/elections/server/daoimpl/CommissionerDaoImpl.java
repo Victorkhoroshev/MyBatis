@@ -3,14 +3,15 @@ package net.thumbtack.school.elections.server.daoimpl;
 import net.thumbtack.school.elections.server.dao.CommissionerDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Commissioner;
-import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.service.ServerException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommissionerDaoImpl implements CommissionerDao<Commissioner> {
+public class CommissionerDaoImpl implements CommissionerDao {
+    private final Database database;
 
     public CommissionerDaoImpl() {
+        database = Database.getInstance();
     }
 
     /**
@@ -19,7 +20,7 @@ public class CommissionerDaoImpl implements CommissionerDao<Commissioner> {
      */
     public List<String> getLogins() {
         List<String> logins = new ArrayList<>();
-        for (Commissioner commissioner: Database.getCommissionerSet()) {
+        for (Commissioner commissioner: database.getCommissionerSet()) {
             logins.add(commissioner.getLogin());
         }
         return logins;
@@ -28,16 +29,20 @@ public class CommissionerDaoImpl implements CommissionerDao<Commissioner> {
     /**
      * Get commissioner by his login from database.
      * @param login commissioner's login.
-     * @return The commissioner who owns this login.
-     * @throws ServerException if login not found in database commissioner set.
+     * @return The commissioner who owns this login or null if commissioner not found.
      */
     public Commissioner get(String login) throws ServerException {
-        for (Commissioner commissioner : Database.getCommissionerSet()) {
+        for (Commissioner commissioner : database.getCommissionerSet()) {
             if (commissioner.getLogin().equals(login)) {
                 return commissioner;
             }
         }
-        //REVU: это ошибка сервис уровня, дао просто должно вернуть null
-        throw new ServerException(ExceptionErrorCode.NOT_FOUND);
+        return null;
+    }
+
+    @Override
+    public boolean contain(String login) {
+        return database.getCommissionerSet().stream()
+                .anyMatch(commissioner -> commissioner.getLogin().equals(login));
     }
 }

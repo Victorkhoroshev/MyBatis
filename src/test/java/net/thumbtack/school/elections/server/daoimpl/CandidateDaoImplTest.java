@@ -12,9 +12,10 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestCandidateDaoImpl {
+public class CandidateDaoImplTest {
     private final Server server = new Server();
-    private final CandidateDao<Candidate> dao = new CandidateDaoImpl();
+    private final Database database = Database.getInstance();
+    private final CandidateDao dao = new CandidateDaoImpl();
 
     @Test
     public void saveTest() throws IOException, ClassNotFoundException {
@@ -26,8 +27,8 @@ public class TestCandidateDaoImpl {
         dao.save(candidate);
         dao.save(candidate1);
         assertAll(
-                () ->assertEquals(1, Database.getCandidateSet().size()),
-                () ->assertTrue(Database.getCandidateSet().contains(candidate))
+                () ->assertEquals(1, database.getCandidateSet().size()),
+                () ->assertTrue(database.getCandidateSet().contains(candidate))
         );
         server.stopServer(null);
     }
@@ -39,12 +40,7 @@ public class TestCandidateDaoImpl {
                 "Пригородная", 21, 188, "victor@khoroshev.net"," 1111"));
         dao.save(candidate);
         assertEquals(candidate, dao.get("victor@khoroshev.net"));
-        try {
-            dao.get("1");
-            fail();
-        } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.CANDIDATE_NOT_FOUND, ex.getErrorCode());
-        }
+        assertNull(dao.get("1"));
         server.stopServer(null);
     }
 
@@ -68,11 +64,11 @@ public class TestCandidateDaoImpl {
                 "Пригородная", 21, 188, "victor@khoroshev.net"," 1111"));
         dao.save(candidate);
         dao.delete(candidate1);
-        assertEquals(1, Database.getCandidateSet().size());
-        assertTrue(Database.getCandidateSet().contains(candidate));
+        assertEquals(1, database.getCandidateSet().size());
+        assertTrue(database.getCandidateSet().contains(candidate));
         dao.delete(candidate);
-        assertFalse(Database.getCandidateSet().contains(candidate));
-        assertEquals(0, Database.getCandidateSet().size());
+        assertFalse(database.getCandidateSet().contains(candidate));
+        assertEquals(0, database.getCandidateSet().size());
         server.stopServer(null);
     }
 }

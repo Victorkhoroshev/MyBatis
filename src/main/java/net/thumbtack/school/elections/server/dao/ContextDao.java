@@ -1,6 +1,8 @@
 package net.thumbtack.school.elections.server.dao;
 
-public interface ContextDao<T>{
+import net.thumbtack.school.elections.server.model.Context;
 
-    void sync(T t);
+public interface ContextDao{
+
+    void sync(Context context);
 }

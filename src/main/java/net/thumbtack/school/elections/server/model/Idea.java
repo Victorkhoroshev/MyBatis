@@ -1,23 +1,23 @@
 package net.thumbtack.school.elections.server.model;
 
+import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class Idea implements Comparable<Idea>, Serializable {
-    //REVU: предложение может быть без автора?
-    private @Nullable Voter author;
+    private static final long serialVersionUID = 4L;
+    private final Voter author;
     private final String key;
     private final String textOfIdea;
     private int sum;
     private Float rating;
     private Map<Voter, Integer> votedVoters;
+    private boolean isCommunity;
 
     public Idea(String key, Voter author, String idea) {
-        setAuthor(author);
+        this.author = author;
         this.key = key;
         this.textOfIdea = idea;
         setRating(5);
@@ -34,10 +34,6 @@ public class Idea implements Comparable<Idea>, Serializable {
         return votedVoters;
     }
 
-    public void setAuthor(@Nullable Voter author) {
-        this.author = author;
-    }
-
     public String getKey() {
         return key;
     }
@@ -46,7 +42,7 @@ public class Idea implements Comparable<Idea>, Serializable {
         this.rating = rating;
     }
 
-    public @Nullable Voter getAuthor() {
+    public Voter getAuthor() {
         return author;
     }
 
@@ -66,12 +62,20 @@ public class Idea implements Comparable<Idea>, Serializable {
         this.sum = sum;
     }
 
+    public boolean isCommunity() {
+        return isCommunity;
+    }
+
+    public void setCommunity(boolean community) {
+        isCommunity = community;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Idea idea = (Idea) o;
-        return key.equals(idea.key);
+        return Objects.equals(key, idea.key);
     }
 
     @Override

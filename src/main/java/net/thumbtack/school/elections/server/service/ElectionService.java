@@ -1,5 +1,11 @@
 package net.thumbtack.school.elections.server.service;
 
+import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dto.request.*;
+import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
+import net.thumbtack.school.elections.server.dto.response.GetCandidateDtoResponse;
+import net.thumbtack.school.elections.server.dto.response.GetElectionResultDtoResponse;
+import net.thumbtack.school.elections.server.dto.response.GetVoterDtoResponse;
 import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Voter;
 import java.io.Serializable;
@@ -7,19 +13,22 @@ import java.util.*;
 
 public class ElectionService implements Serializable {
     private final transient ContextService contextService;
+    private final transient SessionService sessionService;
+    private final transient CandidateService candidateService;
+    private final transient Gson gson;
+    private final transient Validation validation;
     private Map<Candidate, List<Voter>> candidateMap;
     private List<Voter> vsEveryone;
 
-    public ElectionService(ContextService contextService) {
+    private static final transient String EMPTY_JSON = "";
+    private static final transient String NULL_VALUE = "Некорректный запрос.";
+
+    public ElectionService(ContextService contextService, Gson gson, SessionService sessionService, CandidateService candidateService) {
         this.contextService = contextService;
-    }
-
-    public Map<Candidate, List<Voter>> getCandidateMap() {
-        return candidateMap;
-    }
-
-    public List<Voter> getVsEveryone() {
-        return vsEveryone;
+        this.gson = gson;
+        this.sessionService = sessionService;
+        this.candidateService = candidateService;
+        validation = new Validation();
     }
 
     /**
@@ -27,13 +36,16 @@ public class ElectionService implements Serializable {
      * filling with the passed values, create new empty versus everyone set.
      * @param candidateSet set of candidates who have confirmed their candidacy.
      */
-    public void startElection(Set<Candidate> candidateSet) {
-        contextService.setIsElectionStart(true);
-        setCandidateMap(new HashMap<>());
-        setVsEveryone(new ArrayList<>());
-        for (Candidate candidate : candidateSet) {
+    public String startElection(String requestJsonString) {
+        CommissionerStartElectionDtoRequest request =
+                gson.fromJson(requestJsonString, CommissionerStartElectionDtoRequest.class);
+        contextService.setIsElectionStart(gson.toJson(new SetIsElectionStartDtoRequest(true)));
+        candidateMap = new HashMap<>();
+        vsEveryone = new ArrayList<>();
+        for (Candidate candidate : request.getCandidateSet()) {
             candidateMap.put(candidate, new ArrayList<>());
         }
+        return EMPTY_JSON;
     }
 
     /**
@@ -45,21 +57,34 @@ public class ElectionService implements Serializable {
      * @param candidate candidate to vote for.
      * @throws ServerException if election not start or election already stop.
      */
-    public void vote(Voter voter, Candidate candidate) throws ServerException {
-        if (contextService.isElectionStart()) {
-            if (contextService.isElectionStop()) {
-                throw new ServerException(ExceptionErrorCode.ELECTION_STOP);
-            }
+    public String vote(String requestJsonString) {
+        if (!contextService.isElectionStart()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_NOT_START.getMessage()));
+        }
+        if (contextService.isElectionStop()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_STOP.getMessage()));
+        }
+        VoteDtoRequest request = gson.fromJson(requestJsonString, VoteDtoRequest.class);
+        try {
+            validation.validate(request.getToken());
+            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
+                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
+            Voter voter = getVoterDtoResponse.getVoter();
             if (candidateMap.values().stream()
-                    .noneMatch(voters -> voters.contains(voter))) {
-                if (candidate == null) {
+                    .noneMatch(voters -> voters.contains(voter)) && vsEveryone.stream()
+                    .noneMatch(voter1 -> voter1.equals(voter))) {
+                if (request.getCandidateLogin() == null) {
                     vsEveryone.add(voter);
-                } else if (!voter.equals(candidate.getVoter())) {
+                } else if (!voter.getLogin().equals(request.getCandidateLogin())) {
+                    Candidate candidate = gson.fromJson(candidateService.getCandidate(request.getCandidateLogin()), GetCandidateDtoResponse.class).getCandidate();
                     candidateMap.get(candidate).add(voter);
                 }
             }
-        } else {
-            throw new ServerException(ExceptionErrorCode.ELECTION_NOT_START);
+            return EMPTY_JSON;
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
@@ -71,7 +96,7 @@ public class ElectionService implements Serializable {
      * set of candidates with the highest number of votes.
      * Else: null.
      */
-    public Set<Candidate> getElectionResult() {
+    public String getElectionResult() {
         Set<Candidate> candidateSet = new HashSet<>();
         Candidate candidate = null;
         int i = 0;
@@ -89,14 +114,26 @@ public class ElectionService implements Serializable {
                 }
             }
             if (candidateSet.size() > 1) {
-                startElection(candidateSet);
+                startElection(gson.toJson(new CommissionerStartElectionDtoRequest(candidateSet)));
             } else {
-                contextService.setIsElectionStop(true);
+                contextService.setIsElectionStop(gson.toJson(new SetIsElectionStopDtoRequest(true)));
             }
         } else {
-            contextService.setIsElectionStop(true);
+            contextService.setIsElectionStop(gson.toJson(new SetIsElectionStopDtoRequest(true)));
         }
-        return candidateSet;
+        return gson.toJson(new GetElectionResultDtoResponse(candidateSet));
+    }
+
+    public ContextService getContextService() {
+        return contextService;
+    }
+
+    public SessionService getSessionService() {
+        return sessionService;
+    }
+
+    public CandidateService getCandidateService() {
+        return candidateService;
     }
 
     public void setCandidateMap(Map<Candidate, List<Voter>> candidateMap) {
@@ -105,5 +142,13 @@ public class ElectionService implements Serializable {
 
     public void setVsEveryone(List<Voter> vsEveryone) {
         this.vsEveryone = vsEveryone;
+    }
+
+    public Map<Candidate, List<Voter>> getCandidateMap() {
+        return candidateMap;
+    }
+
+    public List<Voter> getVsEveryone() {
+        return vsEveryone;
     }
 }

@@ -1,5 +1,8 @@
 package net.thumbtack.school.elections.server.service;
 
+import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dto.request.*;
+import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.model.Idea;
 import net.thumbtack.school.elections.server.model.Voter;
 import java.io.Serializable;
@@ -8,22 +11,42 @@ import java.util.*;
 public class IdeaService implements Serializable {
     private final List<Idea> ideas;
     private final transient ContextService contextService;
+    private final transient SessionService sessionService;
+    private final transient Gson gson;
+    private final transient Validation validation;
 
-    public IdeaService(ContextService contextService) {
-        ideas = new ArrayList<>();
+    private static final transient String EMPTY_JSON = "";
+    private static final transient String NULL_VALUE = "Некорректный запрос.";
+
+    public IdeaService(ContextService contextService, Gson gson, SessionService sessionService) {
         this.contextService = contextService;
+        this.gson = gson;
+        this.sessionService = sessionService;
+        ideas = new ArrayList<>();
+        validation = new Validation();
     }
 
     /**
      * Get all ideas sorted in descending order of rating.
      * @return A map of ideas and their rating.
      */
-    public Map<Idea, Float> getIdeas() {
-        Map<Idea, Float> sortedMap = new TreeMap<>();
-        for (Idea idea : ideas) {
-            sortedMap.put(idea, idea.getRating());
+    public String getIdeas(String requestJsonString) {
+        GetAllIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllIdeasDtoRequest.class);
+        try {
+            validation.validate(request.getToken());
+            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))), IsLoginDtoResponse.class).isLogin()) {
+                Map<Idea, Float> sortedMap = new TreeMap<>();
+                for (Idea idea : ideas) {
+                    sortedMap.put(idea, idea.getRating());
+                }
+                return gson.toJson(new GetAllIdeasDtoResponse(sortedMap));
+            }
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
-        return sortedMap;
+        return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
     }
 
     /**
@@ -32,11 +55,24 @@ public class IdeaService implements Serializable {
      * @param idea text of idea.
      * @throws ServerException if election already start.
      */
-    public void addIdea(Voter voter, String idea) throws ServerException {
-        if (!contextService.isElectionStart()) {
-            ideas.add(new Idea(UUID.randomUUID().toString(), voter, idea));
-        } else {
-            throw new ServerException(ExceptionErrorCode.ELECTION_START);
+    public String addIdea(String requestJsonString) {
+        if (contextService.isElectionStart()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage()));
+        }
+        AddIdeaDtoRequest request = gson.fromJson(requestJsonString, AddIdeaDtoRequest.class);
+        try {
+            validation.validate(request.getIdea());
+            validation.validate(request.getToken());
+            String key = UUID.randomUUID().toString();
+            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
+                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
+            Voter voter = getVoterDtoResponse.getVoter();
+            ideas.add(new Idea(key, voter, request.getIdea()));
+            return gson.toJson(new AddIdeaDtoResponse(key));
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
@@ -44,10 +80,10 @@ public class IdeaService implements Serializable {
      * Set all ideas publicly owned by the logout voter.
      * @param voter voter, who logout.
      */
-    public void setIdeaCommunity(Voter voter) {
+    public void setIdeaCommunity(String login) {
         for (Idea idea: ideas) {
-            if (idea.getAuthor() != null && idea.getAuthor().equals(voter)) {
-                idea.setAuthor(null);
+            if (!idea.isCommunity() && idea.getAuthor().getLogin().equals(login)) {
+                idea.setCommunity(true);
             }
         }
     }
@@ -60,11 +96,18 @@ public class IdeaService implements Serializable {
      * @param voter voter, who wants to estimate an idea.
      * @throws ServerException if rating not range from 1 to 5 or election already start.
      */
-    public void estimate(String ideaKey, int rating, Voter voter) throws ServerException {
-        if (!contextService.isElectionStart()) {
-            if (rating < 1 || rating > 5) {
-                throw new ServerException(ExceptionErrorCode.RATING_INCORRECT);
-            }
+    public String estimate(String requestJsonString) {
+        if (contextService.isElectionStart()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage()));
+        }
+        EstimateIdeaDtoRequest request = gson.fromJson(requestJsonString, EstimateIdeaDtoRequest.class);
+        try {
+            validation.validate(request.getIdeaKey(), request.getToken(), request.getRating());
+            String ideaKey = request.getIdeaKey();
+            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
+                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
+            Voter voter = getVoterDtoResponse.getVoter();
+            int rating = request.getRating();
             for (Idea idea : ideas) {
                 if (idea.getKey().equals(ideaKey) && !idea.getVotedVoters().containsKey(voter)) {
                     idea.getVotedVoters().put(voter, rating);
@@ -73,8 +116,11 @@ public class IdeaService implements Serializable {
                     idea.setRating(newRating);
                 }
             }
-        } else {
-            throw new ServerException(ExceptionErrorCode.ELECTION_START);
+            return EMPTY_JSON;
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
@@ -87,11 +133,18 @@ public class IdeaService implements Serializable {
      * @param rating number in the range from 1 to 5.
      * @throws ServerException if rating not range from 1 to 5 or election already start.
      */
-    public void changeRating(Voter voter, String ideaKey, int rating) throws ServerException {
-        if (!contextService.isElectionStart()) {
-            if (rating < 1 || rating > 5) {
-                throw new ServerException(ExceptionErrorCode.RATING_INCORRECT);
-            }
+    public String changeRating(String requestJsonString) {
+        if (contextService.isElectionStart()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage()));
+        }
+        ChangeRatingDtoRequest request = gson.fromJson(requestJsonString, ChangeRatingDtoRequest.class);
+        try {
+            validation.validate(request.getIdeaKey(), request.getToken(), request.getRating());
+            String ideaKey = request.getIdeaKey();
+            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
+                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
+            Voter voter = getVoterDtoResponse.getVoter();
+            int rating = request.getRating();
             for (Idea idea : ideas) {
                 if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter) && idea.getAuthor() != voter) {
                     idea.setSum(idea.getSum() + rating - idea.getVotedVoters().get(voter));
@@ -101,8 +154,11 @@ public class IdeaService implements Serializable {
                     break;
                 }
             }
-        } else {
-            throw new ServerException(ExceptionErrorCode.ELECTION_START);
+            return EMPTY_JSON;
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
@@ -113,8 +169,18 @@ public class IdeaService implements Serializable {
      * @param ideaKey unique idea's id.
      * @throws ServerException if election already start.
      */
-    public void removeRating(Voter voter, String ideaKey) throws ServerException {
-        if (!contextService.isElectionStart()) {
+    public String removeRating(String requestJsonString) {
+        if (contextService.isElectionStart()) {
+            return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage()));
+        }
+        RemoveRatingDtoRequest request = gson.fromJson(requestJsonString, RemoveRatingDtoRequest.class);
+        try {
+            validation.validate(request.getIdeaKey());
+            validation.validate(request.getToken());
+            String ideaKey = request.getIdeaKey();
+            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
+                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
+            Voter voter = getVoterDtoResponse.getVoter();
             for (Idea idea : ideas) {
                 if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter) && idea.getAuthor() != voter) {
                     idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter));
@@ -124,8 +190,11 @@ public class IdeaService implements Serializable {
                     break;
                 }
             }
-        } else {
-            throw new ServerException(ExceptionErrorCode.ELECTION_START);
+            return EMPTY_JSON;
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
     }
 
@@ -133,7 +202,9 @@ public class IdeaService implements Serializable {
      * A new rating is calculated for all ideas evaluated by the voter, based on the voter's previous rating.
      * @param voter voter who logout.
      */
-    public void removeAllRating(Voter voter) {
+    public void removeAllRating(String requestJsonString) {
+        RemoveAllRatingDtoRequest request = gson.fromJson(requestJsonString, RemoveAllRatingDtoRequest.class);
+        Voter voter = request.getVoter();
         for (Idea idea : ideas) {
             if (idea.getVotedVoters().containsKey(voter) && idea.getAuthor() != voter) {
                 idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter));
@@ -143,6 +214,7 @@ public class IdeaService implements Serializable {
                 idea.getVotedVoters().remove(voter);
             }
         }
+        setIdeaCommunity(voter.getLogin());
     }
 
     /**
@@ -151,9 +223,14 @@ public class IdeaService implements Serializable {
      * @param ideas list of candidate's ideas text.
      * @throws ServerException if election already start.
      */
-    public void addAllIdeas(Voter voter, List<String> ideas) throws ServerException {
-        for (String idea : ideas) {
-            addIdea(voter, idea);
+    public void addAllIdeas(String requestJsonString) throws ServerException {
+        AddAllIdeasDtoRequest addAllIdeasDtoRequest = gson.fromJson(requestJsonString, AddAllIdeasDtoRequest.class);
+        for (String idea : addAllIdeasDtoRequest.getIdeas()) {
+            GetVoterSessionDtoResponse getVoterSessionDtoResponse = gson.fromJson(sessionService.getVoterSession(
+                    gson.toJson(new GetVoterSessionDtoRequest(addAllIdeasDtoRequest.getVoter()))),
+                    GetVoterSessionDtoResponse.class);
+            AddIdeaDtoRequest request = new AddIdeaDtoRequest(idea, getVoterSessionDtoResponse.getSession().getToken());
+            addIdea(gson.toJson(request));
         }
     }
 
@@ -163,10 +240,11 @@ public class IdeaService implements Serializable {
      * @return The idea who owns this idea's key.
      * @throws ServerException if no idea has the given idea's key.
      */
-    public Idea getIdea(String ideaKey) throws ServerException {
+    public String getIdea(String requestJsonString) throws ServerException {
+        GetIdeaDtoRequest request = gson.fromJson(requestJsonString, GetIdeaDtoRequest.class);
         for (Idea idea : ideas) {
-            if (idea.getKey().equals(ideaKey)) {
-                return idea;
+            if (idea.getKey().equals(request.getIdeaKey())) {
+                return gson.toJson(new GetIdeaDtoResponse(idea));
             }
         }
         throw new ServerException(ExceptionErrorCode.IDEA_NOT_FOUND);
@@ -177,17 +255,29 @@ public class IdeaService implements Serializable {
      * @param logins list of voter logins who popped up their ideas.
      * @return Ideas list.
      */
-    public List<Idea> getAllVotersIdeas(List<String> logins) {
-        List<Idea> voterIdeas = new ArrayList<>();
-        for (Idea idea : ideas) {
-            if (idea.getAuthor() != null && logins.contains(idea.getAuthor().getLogin())) {
-                voterIdeas.add(idea);
+    public String getAllVotersIdeas(String requestJsonString) {
+        GetAllVotersIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllVotersIdeasDtoRequest.class);
+        try {
+            validation.validate(request.getToken(), request.getLogins());
+            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))), IsLoginDtoResponse.class).isLogin()) {
+                List<Idea> voterIdeas = new ArrayList<>();
+                List<String> logins = request.getLogins();
+                for (Idea idea : ideas) {
+                    if (!idea.isCommunity() && logins.contains(idea.getAuthor().getLogin())) {
+                        voterIdeas.add(idea);
+                    }
+                    if (idea.isCommunity() && logins.contains(null)) {
+                        voterIdeas.add(idea);
+                    }
+                }
+                return gson.toJson(new GetAllVotersIdeasDtoResponse(voterIdeas));
             }
-            if (idea.getAuthor() == null && logins.contains(null)) {
-                voterIdeas.add(idea);
-            }
+        } catch (ServerException ex) {
+            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        } catch (NullPointerException ignored) {
+            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
-        return voterIdeas;
+        return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
     }
 
     /**
@@ -197,25 +287,25 @@ public class IdeaService implements Serializable {
      * @return Unique idea id.
      * @throws ServerException if no idea has such an author and text.
      */
-    public String getKey(Voter voter, String text) throws ServerException {
+    public String getKey(String requestJsonString) throws ServerException {
+        GetKeyDtoRequest request = gson.fromJson(requestJsonString, GetKeyDtoRequest.class);
         for (Idea idea : ideas) {
-            if (idea.getAuthor() == voter && idea.getTextOfIdea().equals(text)) {
-                return idea.getKey();
+            if (idea.getAuthor() == request.getVoter() && idea.getTextOfIdea().equals(request.getText())) {
+                return gson.toJson(new GetKeyDtoResponse(idea.getKey()));
             }
         }
-        throw new ServerException(ExceptionErrorCode.IDEA_NOT_FOUND);
+        return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.IDEA_NOT_FOUND.getMessage()));
     }
-    //REVU: думаю этот метод здесь нам не нужен
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IdeaService that = (IdeaService) o;
-        return ideas.equals(that.ideas);
+
+    public List<Idea> getIdeas() {
+        return ideas;
     }
-    //REVU: думаю этот метод здесь нам не нужен
-    @Override
-    public int hashCode() {
-        return Objects.hash(ideas);
+
+    public ContextService getContextService() {
+        return contextService;
+    }
+
+    public SessionService getSessionService() {
+        return sessionService;
     }
 }

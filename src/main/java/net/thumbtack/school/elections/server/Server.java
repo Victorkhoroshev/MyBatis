@@ -1,29 +1,25 @@
 package net.thumbtack.school.elections.server;
 import com.google.gson.Gson;
-import net.thumbtack.school.elections.server.dto.request.*;
-import net.thumbtack.school.elections.server.dto.response.*;
+import net.thumbtack.school.elections.server.database.Database;
+import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Context;
 import net.thumbtack.school.elections.server.service.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 public class Server {
-    private static final String EMPTY_JSON = "";
-    private static final String NULL_VALUE = "Некорректный запрос.";
-    //REVU:private modifiers?
-    Gson gson;
-    ContextService contextService;
-    SessionService sessionService;
-    IdeaService ideaService;
-    CandidateService candidateService;
-    VoterService voterService;
-    CommissionerService commissionerService;
-    ElectionService electionService;
+    private Gson gson;
+    private ContextService contextService;
+    private SessionService sessionService;
+    private IdeaService ideaService;
+    private CandidateService candidateService;
+    private VoterService voterService;
+    private CommissionerService commissionerService;
+    private ElectionService electionService;
 
     public void startServer(String savedDataFileName) throws IOException, ClassNotFoundException {
         gson = new Gson();
-        sessionService = new SessionService();
+        sessionService = new SessionService(gson);
         if (savedDataFileName != null) {
             try (ObjectInputStream objectInputStream = new ObjectInputStream(
                     new FileInputStream(savedDataFileName))) {
@@ -32,16 +28,17 @@ public class Server {
                 candidateService = context.getCandidateService();
                 electionService = context.getElectionService();
                 contextService = new ContextService(context);
-                commissionerService = new CommissionerService(sessionService, electionService, contextService);
+                commissionerService = new CommissionerService(sessionService, electionService, contextService, gson, candidateService);
+                voterService = new VoterService(sessionService, contextService, gson, ideaService);
             }
         } else {
             contextService = new ContextService();
-            ideaService = new IdeaService(contextService);
-            candidateService = new CandidateService(contextService);
-            electionService = new ElectionService(contextService);
-            commissionerService = new CommissionerService(sessionService, electionService, contextService);
+            ideaService = new IdeaService(contextService, gson, sessionService);
+            voterService = new VoterService(sessionService, contextService, gson, ideaService);
+            candidateService = new CandidateService(contextService, gson, sessionService, voterService, ideaService);
+            electionService = new ElectionService(contextService, gson, sessionService, candidateService);
+            commissionerService = new CommissionerService(sessionService, electionService, contextService, gson, candidateService);
         }
-        voterService = new VoterService(sessionService, contextService);
     }
 
     public void stopServer(String saveDataFileName) throws IOException {
@@ -79,45 +76,7 @@ public class Server {
      * If login already exist: gson element with field: String error: "Такой логин уже используется.".
      */
     public String register(String requestJsonString) {
-        String response = "";
-        RegisterDtoRequest request = gson.fromJson(requestJsonString, RegisterDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (requestJsonString == null || !request.requiredFieldsIsNotNull()) {
-            return gson.toJson(new ErrorDtoResponse("Пожалуйста, заполните все данные."));
-        }
-        if (!request.isFirstNameValid()) {
-            response += "Имя должно быть на кириллице, без пробелов, спец. символов и цифр.\n";
-        }
-        if (!request.isLastNameValid()) {
-            response += "Фамилия должна быть на кириллице, без пробелов, спец. символов и цифр.\n";
-        }
-        if (!request.isPatronymicValid()) {
-            response += "Отчество должно быть на кириллице, без пробелов, спец. символов и цифр.\n";
-        }
-        if (!request.isStreetValid()) {
-            response += "Название улицы должно быть на кириллице, без пробелов, спец. символов и цифр.\n";
-        }
-        if (!request.isHouseValid()) {
-            response += "Номер дома не может быть меньше единицы.\n";
-        }
-        if (!request.isApartmentValid()) {
-            response += "Номер квартиры не может быть меньше нуля.\n";
-        }
-        if (!request.isLoginValid()) {
-            response += "Длинна логина должна быть не меньше 9 символо.\n";
-        }
-        if (!request.isPasswordValid()) {
-            response += "Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву," +
-            " цифру и один спец. символ, а его длинна не менее 9 символов, без пробелов.\n";
-        }
-        if (response.length() <  1){
-            try {
-                return gson.toJson(new RegisterDtoResponse(voterService.register(request.newVoter())));
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(response));
+        return voterService.register(requestJsonString);
     }
 
 
@@ -133,33 +92,10 @@ public class Server {
      * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
      */
     public String login(String requestJsonString) {
-        String response = "";
-        LoginDtoRequest request = gson.fromJson(requestJsonString, LoginDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request == null || !request.requiredFieldsIsNotNull()) {
-            response += "Пожалуйста, введите логин и пароль.";
-            return gson.toJson(new ErrorDtoResponse(response));
+        if (commissionerService.isCommissioner(requestJsonString)) {
+            return commissionerService.login(requestJsonString);
         }
-        if(!request.isLoginValid()) {
-            response += "Длинна логина должна быть не меньше 9 символо.\n";
-        }
-        if(!request.isPasswordValid()) {
-            response += "Пароль должен содержать хотя бы одну заглавную букву, одну строчную букву," +
-                    " цифру и один спец. символ, а его длинна не менее 9 символов, без пробелов.\n";
-        }
-        if (response.length() < 1) {
-            try {
-                if (commissionerService.getLogins().contains(request.getLogin())) {
-                    return gson.toJson(new LoginDtoResponse(commissionerService.login(request.getLogin(),
-                            request.getPassword())));
-                }
-                return gson.toJson(new LoginDtoResponse(voterService.login(request.getLogin(),
-                        request.getPassword())));
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(response));
+        return voterService.login(requestJsonString);
     }
 
     /**
@@ -174,27 +110,13 @@ public class Server {
      * "Невозможно разлогиниться, для начала, снимите свою кандидатуру с выборов.".
      */
     public String logout(String requestJsonString) {
-        LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request == null || !request.requiredFieldsIsNotNull()) {
-            return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        if (commissionerService.isCommissioner(requestJsonString)) {
+            return commissionerService.logout(requestJsonString);
         }
-        try {
-            if (commissionerService.isCommissioner(request.getToken())){
-                commissionerService.logout(request.getToken());
-            }
-            else if (candidateService.isCandidate(sessionService.getVoter(request.getToken()))) {
-                return gson.toJson(new ErrorDtoResponse("Невозможно разлогиниться, для начала," +
-                        " снимите свою кандидатуру с выборов."));
-            } else {
-                ideaService.setIdeaCommunity(sessionService.getVoter(request.getToken()));
-                ideaService.removeAllRating(sessionService.getVoter(request.getToken()));
-                voterService.logout(request.getToken());
-            }
-            return EMPTY_JSON;
-        } catch (ServerException ex) {
-            return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
+        if (candidateService.isCandidate(requestJsonString)) {
+            return candidateService.logout(requestJsonString);
         }
+        return voterService.logout(requestJsonString);
     }
 
     /**
@@ -205,15 +127,7 @@ public class Server {
      * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String getVoterList(String requestJsonString) {
-        GetVoterListDtoRequest request = gson.fromJson(requestJsonString, GetVoterListDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            if (!sessionService.isLogin(request.getToken())) {
-                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
-            }
-            return gson.toJson(new GetVotersListDtoResponse(voterService.getAll()));
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return voterService.getAll(requestJsonString);
     }
 
     /**
@@ -226,18 +140,7 @@ public class Server {
      * If database not contain voter with this login: gson element with field: String error: "Пользователь не найден.".
      */
     public String addCandidate(String requestJsonString) {
-        AddCandidateDtoRequest request = gson.fromJson(requestJsonString, AddCandidateDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                candidateService.addCandidate(sessionService.getVoter(request.getToken()),
-                        voterService.get(request.getCandidateLogin()));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return candidateService.addCandidate(requestJsonString);
     }
 
     /**
@@ -250,22 +153,7 @@ public class Server {
      * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String confirmationCandidacy(String requestJsonString) {
-        ConfirmationCandidacyDtoRequest request = gson.fromJson(requestJsonString,
-                ConfirmationCandidacyDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                ideaService.addAllIdeas(sessionService.getVoter(request.getToken()), request.getCandidateIdeas());
-                List<String> list = new ArrayList<>();
-                list.add(sessionService.getVoter(request.getToken()).getLogin());
-                candidateService.confirmationCandidacy(sessionService.getVoter(request.getToken()),
-                        ideaService.getAllVotersIdeas(list));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return candidateService.confirmationCandidacy(requestJsonString);
     }
 
     /**
@@ -278,17 +166,7 @@ public class Server {
      * If database not contains this candidate: gson element with field: String error: "Кандидат не найден.".
      */
     public String withdrawCandidacy(String requestJsonString) {
-        WithdrawCandidacyRequest request = gson.fromJson(requestJsonString, WithdrawCandidacyRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                candidateService.withdrawCandidacy(sessionService.getVoter(request.getToken()));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return candidateService.withdrawCandidacy(requestJsonString);
     }
 
     /**
@@ -303,24 +181,10 @@ public class Server {
      * If no idea has the given voter's login and text: gson element with field: String error: "Идея не найдена.".
      */
     public String addIdea(String requestJsonString) {
-        AddIdeaDtoRequest request = gson.fromJson(requestJsonString, AddIdeaDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                if (candidateService.isCandidate(sessionService.getVoter(request.getToken()))) {
-                    ideaService.addIdea(sessionService.getVoter(request.getToken()), request.getIdea());
-                    candidateService.addIdea(sessionService.getVoter(request.getToken()), ideaService.getIdea(
-                            ideaService.getKey(sessionService.getVoter(request.getToken()),request.getIdea())));
-                    return EMPTY_JSON;
-                } else {
-                    ideaService.addIdea(sessionService.getVoter(request.getToken()), request.getIdea());
-                    return EMPTY_JSON;
-                }
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
+        if (candidateService.isCandidate(requestJsonString)) {
+            return candidateService.addIdea(requestJsonString);
         }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return ideaService.addIdea(requestJsonString);
     }
 
     /**
@@ -335,18 +199,7 @@ public class Server {
      * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String estimateIdea(String requestJsonString) {
-        EstimateIdeaDtoRequest request = gson.fromJson(requestJsonString, EstimateIdeaDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                ideaService.estimate(request.getIdeaKey(), request.getRating(),
-                        sessionService.getVoter(request.getToken()));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return ideaService.estimate(requestJsonString);
     }
 
     /**
@@ -361,18 +214,7 @@ public class Server {
      * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String changeRating(String requestJsonString) {
-        ChangeRatingDtoRequest request = gson.fromJson(requestJsonString, ChangeRatingDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                ideaService.changeRating(sessionService.getVoter(request.getToken()),
-                        request.getIdeaKey(), request.getRating());
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return ideaService.changeRating(requestJsonString);
     }
 
     /**
@@ -386,17 +228,7 @@ public class Server {
      * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String removeRating(String requestJsonString) {
-        RemoveRatingDtoRequest request = gson.fromJson(requestJsonString, RemoveRatingDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                ideaService.removeRating(sessionService.getVoter(request.getToken()), request.getIdeaKey());
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return ideaService.removeRating(requestJsonString);
     }
 
     /**
@@ -411,18 +243,7 @@ public class Server {
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String takeIdea(String requestJsonString) {
-        TakeIdeaDtoRequest request = gson.fromJson(requestJsonString, TakeIdeaDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                candidateService.addIdea(sessionService.getVoter(request.getToken()),
-                        ideaService.getIdea(request.getIdeaKey()));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return candidateService.addIdea(requestJsonString);
     }
 
     /**
@@ -436,18 +257,7 @@ public class Server {
      * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
      */
     public String removeIdea(String requestJsonString) {
-        RemoveIdeaDtoRequest request = gson.fromJson(requestJsonString, RemoveIdeaDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                candidateService.removeIdea(sessionService.getVoter(request.getToken()),
-                        ideaService.getIdea(request.getIdeaKey()));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return candidateService.removeIdea(requestJsonString);
     }
 
     /**
@@ -459,15 +269,7 @@ public class Server {
      * If field is not valid: gson element with field: "String error: "Некорректный запрос.".
      */
     public String getCandidatesMap(String requestJsonString) {
-        GetCandidateMapDtoRequest request = gson.fromJson(requestJsonString, GetCandidateMapDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            if (!sessionService.isLogin(request.getToken())) {
-                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
-            }
-            return gson.toJson(new GetCandidateMapDtoResponse(candidateService.getCandidateMap()));
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return candidateService.getCandidateMap(requestJsonString);
     }
 
     /**
@@ -479,15 +281,7 @@ public class Server {
      * If field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getAllIdeas(String requestJsonString) {
-        GetAllIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllIdeasDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            if (!sessionService.isLogin(request.getToken())) {
-                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
-            }
-            return gson.toJson(new GetAllIdeasDtoResponse(ideaService.getIdeas()));
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return ideaService.getIdeas(requestJsonString);
     }
 
     /**
@@ -499,15 +293,7 @@ public class Server {
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getAllVotersIdeas(String requestJsonString) {
-        GetAllVotersIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllVotersIdeasDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            if (!sessionService.isLogin(request.getToken())) {
-                return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
-            }
-            return gson.toJson(new GetAllVotersIdeasDtoResponse(ideaService.getAllVotersIdeas(request.getLogins())));
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return ideaService.getAllVotersIdeas(requestJsonString);
     }
 
     /**
@@ -518,17 +304,7 @@ public class Server {
      * If field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String startElection(String requestJsonString) {
-        StartElectionDtoRequest request = gson.fromJson(requestJsonString, StartElectionDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                commissionerService.startElection(request.getToken(), candidateService.getCandidateSet());
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return commissionerService.startElection(requestJsonString);
     }
 
     /**
@@ -543,18 +319,7 @@ public class Server {
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String vote(String requestJsonStrong) {
-        VoteDtoRequest request = gson.fromJson(requestJsonStrong, VoteDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                electionService.vote(sessionService.getVoter(request.getToken()),
-                        candidateService.getCandidate(request.getCandidateLogin()));
-                return EMPTY_JSON;
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return electionService.vote(requestJsonStrong);
     }
 
     /**
@@ -565,16 +330,38 @@ public class Server {
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getElectionResult(String requestJsonString) {
-        GetElectionResultDtoRequest request = gson.fromJson(requestJsonString, GetElectionResultDtoRequest.class);
-        //REVU: вынесите логику в слой сервиса. Сервер принимает запрос, передает его сервису и получает ответ.
-        if (request != null && request.requiredFieldsIsNotNull()) {
-            try {
-                return gson.toJson(new GetElectionResultDtoResponse(
-                        commissionerService.getElectionResult(request.getToken())));
-            } catch (ServerException ex) {
-                return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
+        return commissionerService.getElectionResult(requestJsonString);
+    }
+
+    public Gson getGson() {
+        return gson;
+    }
+
+    public ContextService getContextService() {
+        return contextService;
+    }
+
+    public SessionService getSessionService() {
+        return sessionService;
+    }
+
+    public IdeaService getIdeaService() {
+        return ideaService;
+    }
+
+    public CandidateService getCandidateService() {
+        return candidateService;
+    }
+
+    public VoterService getVoterService() {
+        return voterService;
+    }
+
+    public CommissionerService getCommissionerService() {
+        return commissionerService;
+    }
+
+    public ElectionService getElectionService() {
+        return electionService;
     }
 }

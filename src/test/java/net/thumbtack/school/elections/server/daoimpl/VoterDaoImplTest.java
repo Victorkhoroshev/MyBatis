@@ -1,9 +1,12 @@
 package net.thumbtack.school.elections.server.daoimpl;
 import net.thumbtack.school.elections.server.Server;
 import net.thumbtack.school.elections.server.dao.VoterDao;
+import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Voter;
 import net.thumbtack.school.elections.server.service.ServerException;
 import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.HashSet;
@@ -12,13 +15,17 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestVoterDaoImpl {
-    private final Server server = new Server();
-    private final VoterDao<Voter> dao = new VoterDaoImpl();
+public class VoterDaoImplTest {
+    private VoterDao dao;
+
+    @BeforeEach
+    void setUp() {
+        dao = new VoterDaoImpl();
+        Database.getInstance().setVoterSet(new HashSet<>());
+    }
 
     @Test
-    public void saveTest() throws ServerException, IOException, ClassNotFoundException {
-        server.startServer(null);
+    public void saveTest() throws ServerException {
         Voter voter = new Voter("Виктор", "Хорошеев",
                 "Пригородная", 21, 188, "victoroshev.net"," 1111");
         Voter voter1 = new Voter("Виктор", "Хорошеев",
@@ -34,12 +41,6 @@ public class TestVoterDaoImpl {
         } catch (ServerException ex) {
             assertEquals(ExceptionErrorCode.ALREADY_EXISTS, ex.getErrorCode());
         }
-        try {
-            dao.save(voter2);
-            fail();
-        } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.LOGIN_ALREADY_EXISTS, ex.getErrorCode());
-        }
         dao.save(voter3);
         assertAll(
                 () -> assertTrue(dao.getAll().contains(voter)),
@@ -47,31 +48,22 @@ public class TestVoterDaoImpl {
                 () -> assertFalse(dao.getAll().contains(voter2)),
                 () -> assertEquals(2, dao.getAll().size())
         );
-        server.stopServer(null);
     }
 
     @Test
-    public void getTest() throws ServerException, IOException, ClassNotFoundException {
-        server.startServer(null);
+    public void getTest() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(),
                 randomString(), 21, 188, randomString()," 1111");
         Voter voter1 = new Voter(randomString(), randomString(),
                 randomString(), 21, 188, "victor.1net","qQ%34231111");
         dao.save(voter);
         dao.save(voter1);
-        try {
-            dao.get("1");
-            fail();
-        } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.NOT_FOUND, ex.getErrorCode());
-        }
         assertEquals(voter1, dao.get("victor.1net"));
-        server.stopServer(null);
+        assertNull(dao.get("1"));
     }
 
     @Test
-    public void getAllTest() throws IOException, ClassNotFoundException, ServerException {
-        server.startServer(null);
+    public void getAllTest() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(),
                 randomString(), 21, 188, randomString()," 1111");
         dao.save(voter);
@@ -79,7 +71,6 @@ public class TestVoterDaoImpl {
             add(voter);
         }};
         assertEquals(voterSet, dao.getAll());
-        server.stopServer(null);
     }
 
     private String randomString() {

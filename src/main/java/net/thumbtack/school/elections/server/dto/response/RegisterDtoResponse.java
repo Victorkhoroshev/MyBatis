@@ -6,4 +6,8 @@ public class RegisterDtoResponse {
     public RegisterDtoResponse(String token) {
         this.token = token;
     }
+
+    public String getToken() {
+        return token;
+    }
 }

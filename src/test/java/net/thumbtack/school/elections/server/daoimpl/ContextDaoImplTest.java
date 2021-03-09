@@ -13,16 +13,17 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TestContextDaoImpl {
+public class ContextDaoImplTest {
     private final Server server = new Server();
-    private final ContextDao<Context> dao = new ContextDaoImpl();
+    private final ContextDao dao = new ContextDaoImpl();
+    private final Database database = Database.getInstance();
     @Test
     public void syncTest() throws IOException, ClassNotFoundException {
         server.startServer(null);
         assertAll(
-                () -> assertEquals(3, Database.getLogins().size()),
-                () -> assertEquals(0, Database.getVoterSet().size()),
-                () -> assertEquals(0, Database.getCandidateSet().size())
+                () -> assertEquals(3, database.getLogins().size()),
+                () -> assertEquals(0, database.getVoterSet().size()),
+                () -> assertEquals(0, database.getCandidateSet().size())
         );
         Context context = new Context();
         Voter voter1 = new Voter("Виктор", "Хорошев",
@@ -34,14 +35,14 @@ public class TestContextDaoImpl {
         List<String> logins = new ArrayList<>(Arrays.asList("victor@khoroshev.net", "victooroshev.net"));
         Set<Voter> voterSet = new HashSet<>(Arrays.asList(voter1, voter2));
         Set<Candidate> candidateSet = new HashSet<>(Arrays.asList(candidate1, candidate2));
-        Database.setLogins(logins);
-        Database.setVoterSet(voterSet);
-        Database.setCandidateSet(candidateSet);
+        database.setLogins(logins);
+        database.setVoterSet(voterSet);
+        database.setCandidateSet(candidateSet);
         dao.sync(context);
         assertAll(
-                () -> assertEquals(voterSet, Database.getVoterSet()),
-                () -> assertEquals(logins, Database.getLogins()),
-                () -> assertEquals(candidateSet, Database.getCandidateSet())
+                () -> assertEquals(voterSet, database.getVoterSet()),
+                () -> assertEquals(logins, database.getLogins()),
+                () -> assertEquals(candidateSet, database.getCandidateSet())
         );
 
         List<String> logins1 = new ArrayList<>();
@@ -50,11 +51,11 @@ public class TestContextDaoImpl {
         context.setLogins(logins1);
         context.setVoterSet(voterSet1);
         context.setCandidateSet(candidateSet1);
-        ContextDao<Context> daoWithContext = new ContextDaoImpl(context);
+        ContextDao daoWithContext = new ContextDaoImpl(context);
         assertAll(
-                () -> assertEquals(logins1, Database.getLogins()),
-                () -> assertEquals(voterSet1, Database.getVoterSet()),
-                () -> assertEquals(candidateSet1, Database.getCandidateSet())
+                () -> assertEquals(logins1, database.getLogins()),
+                () -> assertEquals(voterSet1, database.getVoterSet()),
+                () -> assertEquals(candidateSet1, database.getCandidateSet())
         );
         server.stopServer(null);
     }
