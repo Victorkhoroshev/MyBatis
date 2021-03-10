@@ -1,21 +1,13 @@
 package net.thumbtack.school.elections.server.dto.request;
 
 public class StartElectionDtoRequest {
-    private String token;
+    private final String token;
 
     public StartElectionDtoRequest(String token) {
-        setToken(token);
+        this.token = token;
     }
 
     public String getToken() {
         return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public boolean requiredFieldsIsNotNull(){
-        return token != null;
     }
 }

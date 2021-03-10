@@ -260,29 +260,165 @@ public class CandidateServiceTest {
         assertFalse(candidateService.isCandidate(gson.toJson(new IsCandidateDtoRequest(randomString()))));
     }
 
-//    @Test
-//    public void addIdea_Success() throws ServerException {
-//        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
-//        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
-//                1, 1, randomString(), "Pas&77123");
-//        when(candidateService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-//        candidateService.getDao().save(new Candidate(voter));
-//        when(candidateService.getIdeaService().addIdea(anyString())).thenReturn(gson.toJson(new AddIdeaDtoResponse("key")));
-//        when(candidateService.getIdeaService().getIdea(gson.toJson(new GetIdeaDtoRequest(anyString())))).thenReturn(gson.toJson(new GetIdeaDtoResponse(new Idea("key", voter, "idea"))));
-//        //when(candidateService.getIdeaService().getIdea(gson.toJson(new GetIdeaDtoRequest(candidateService.getIdeaService().addIdea(gson.toJson(new AddIdeaDtoRequest("idea", "token"))))))).thenReturn(gson.toJson(new GetIdeaDtoResponse(new Idea("key", voter, "idea"))));
-//        assertEquals(gson.toJson(new AddIdeaDtoResponse("key")), candidateService.addIdea(gson.toJson(new AddIdeaDtoRequest("idea", "token"))));
-//    }
+    @Test
+    public void addIdea_Success() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        when(candidateService.getSessionService().getVoter(anyString())).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        candidateService.getDao().save(new Candidate(voter));
+        when(candidateService.getIdeaService().addIdea(anyString())).thenReturn(gson.toJson(new AddIdeaDtoResponse("1")));
+        when(candidateService.getIdeaService().getIdea(anyString())).thenReturn(gson.toJson(new GetIdeaDtoResponse(new Idea("1", voter, "idea"))));
+        candidateService.getIdeas().put(new Candidate(voter), new ArrayList<>());
+        assertEquals("1", gson.fromJson(candidateService.addIdea(gson.toJson(new AddIdeaDtoRequest(randomString(), randomString()))), AddIdeaDtoResponse.class).getKey());
+    }
 
-//    @Test
-//    public void removeIdeaTest_Success() throws ServerException {
-//        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
-//                1, 1, randomString(), "Pas&77123");
-//        candidateService.getDao().save(new Candidate(voter));
-//        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
-//        when(candidateService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-//        when(candidateService.getIdeaService().getIdea(gson.toJson(new GetIdeaDtoRequest(anyString())))).thenReturn(gson.toJson(new GetIdeaDtoResponse(new Idea("key", voter, "idea"))));
-//        assertEquals("", candidateService.removeIdea(gson.toJson(new RemoveIdeaDtoRequest("token", "key"))));
-//    }
+    @Test
+    public void addIdea_Candidate_Not_Found() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        when(candidateService.getSessionService().getVoter(anyString())).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(candidateService.getIdeaService().addIdea(anyString())).thenReturn(gson.toJson(new AddIdeaDtoResponse("1")));
+        when(candidateService.getIdeaService().getIdea(anyString())).thenReturn(gson.toJson(new GetIdeaDtoResponse(new Idea("1", voter, "idea"))));
+        candidateService.getIdeas().put(new Candidate(voter), new ArrayList<>());
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.CANDIDATE_NOT_FOUND.getMessage())), candidateService.addIdea(gson.toJson(new AddIdeaDtoRequest(randomString(), randomString()))));
+        verify(candidateService.getIdeaService(), times(0)).getIdeas();
+        verify(candidateService.getIdeaService(), times(0)).addIdea(anyString());
+    }
+
+    @Test
+    public void addIdea_Candidate_Election_Start()  {
+        when(candidateService.getContextService().isElectionStart()).thenReturn(true);
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())), candidateService.addIdea(gson.toJson(new AddIdeaDtoRequest(randomString(), randomString()))));
+        verify(candidateService.getIdeaService(), times(0)).getIdeas();
+        verify(candidateService.getIdeaService(), times(0)).addIdea(anyString());
+    }
+
+    @Test
+    public void addIdea_Candidate_Field_Not_Valid()  {
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), candidateService.addIdea(gson.toJson(new AddIdeaDtoRequest(null, randomString()))));
+        verify(candidateService.getIdeaService(), times(0)).getIdeas();
+        verify(candidateService.getIdeaService(), times(0)).addIdea(anyString());
+    }
+
+    @Test
+    public void addIdea_Candidate_Json_Is_Null()  {
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), candidateService.addIdea(null));
+        verify(candidateService.getIdeaService(), times(0)).getIdeas();
+        verify(candidateService.getIdeaService(), times(0)).addIdea(anyString());
+    }
+
+    @Test
+    public void removeIdeaTest_Success() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Idea idea1 = new Idea("1", voter2, "1");
+        Idea idea2 = new Idea("2", voter2, "1");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        when(candidateService.getSessionService().getVoter(anyString())).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(candidateService.getIdeaService().getIdea(anyString())).thenReturn(gson.toJson(new GetIdeaDtoResponse(idea1)));
+        List<Idea> ideas = new ArrayList<>();
+        ideas.add(idea1);
+        ideas.add(idea2);
+        candidateService.getIdeas().put(new Candidate(voter), ideas);
+        candidateService.getDao().save(new Candidate(voter));
+        assertEquals("", candidateService.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(randomString(), randomString()))));
+        assertEquals(1, candidateService.getIdeas().get(new Candidate(voter)).size());
+    }
+
+    @Test
+    public void removeIdeaTest_Candidate_Not_Found() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        when(candidateService.getSessionService().getVoter(anyString())).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(candidateService.getIdeaService().getIdea(anyString())).thenReturn(gson.toJson(new GetIdeaDtoResponse(new Idea("1", voter2, "1"))));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.CANDIDATE_NOT_FOUND.getMessage())), candidateService.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(randomString(), randomString()))));
+    }
+
+    @Test
+    public void removeIdeaTest_Author_Is_A_Candidate() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Idea idea1 = new Idea("1", voter, "1");
+        Idea idea2 = new Idea("2", voter2, "1");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        when(candidateService.getSessionService().getVoter(anyString())).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(candidateService.getIdeaService().getIdea(anyString())).thenReturn(gson.toJson(new GetIdeaDtoResponse(idea1)));
+        List<Idea> ideas = new ArrayList<>();
+        ideas.add(idea1);
+        ideas.add(idea2);
+        candidateService.getIdeas().put(new Candidate(voter), ideas);
+        candidateService.getDao().save(new Candidate(voter));
+        assertEquals("", candidateService.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(randomString(), randomString()))));
+        assertEquals(2, candidateService.getIdeas().get(new Candidate(voter)).size());
+    }
+
+    @Test
+    public void removeIdeaTest_Election_Start() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Idea idea1 = new Idea("1", voter, "1");
+        Idea idea2 = new Idea("2", voter2, "1");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(true);
+        List<Idea> ideas = new ArrayList<>();
+        ideas.add(idea1);
+        ideas.add(idea2);
+        candidateService.getIdeas().put(new Candidate(voter), ideas);
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())), candidateService.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(randomString(), randomString()))));
+        assertEquals(2, candidateService.getIdeas().get(new Candidate(voter)).size());
+        verify(candidateService.getSessionService(), times(0)).getVoter(anyString());
+        verify(candidateService.getIdeaService(), times(0)).getIdea(anyString());
+    }
+
+    @Test
+    public void removeIdeaTest_Field_Not_Valid() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Idea idea1 = new Idea("1", voter, "1");
+        Idea idea2 = new Idea("2", voter2, "1");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        List<Idea> ideas = new ArrayList<>();
+        ideas.add(idea1);
+        ideas.add(idea2);
+        candidateService.getIdeas().put(new Candidate(voter), ideas);
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), candidateService.removeIdea(gson.toJson(new RemoveIdeaDtoRequest(null, randomString()))));
+        assertEquals(2, candidateService.getIdeas().get(new Candidate(voter)).size());
+        verify(candidateService.getSessionService(), times(0)).getVoter(anyString());
+        verify(candidateService.getIdeaService(), times(0)).getIdea(anyString());
+    }
+
+    @Test
+    public void removeIdeaTest_Json_Is_Null() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Idea idea1 = new Idea("1", voter, "1");
+        Idea idea2 = new Idea("2", voter2, "1");
+        when(candidateService.getContextService().isElectionStart()).thenReturn(false);
+        List<Idea> ideas = new ArrayList<>();
+        ideas.add(idea1);
+        ideas.add(idea2);
+        candidateService.getIdeas().put(new Candidate(voter), ideas);
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), candidateService.removeIdea(null));
+        assertEquals(2, candidateService.getIdeas().get(new Candidate(voter)).size());
+        verify(candidateService.getSessionService(), times(0)).getVoter(anyString());
+        verify(candidateService.getIdeaService(), times(0)).getIdea(anyString());
+    }
 
     @Test
     public void getCandidateMapTest_Success() {
@@ -313,16 +449,36 @@ public class CandidateServiceTest {
         assertEquals(new HashSet<>(), candidateService.getCandidateSet());
     }
 
-//    @Test
-//    public void getCandidateTest_Success() throws ServerException {
-//        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
-//                1, 1, randomString(), "Pas&77123");
-//        Candidate candidate = new Candidate(voter);
-//        candidateService.getSessionService().loginVoter(gson.toJson(new LoginVoterDtoRequest(voter)));
-//        String token = gson.fromJson(candidateService.getSessionService().getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(voter))), GetVoterSessionDtoResponse.class).getToken();
-//        candidateService.confirmationCandidacy(gson.toJson(new ConfirmationCandidacyDtoRequest(token, new ArrayList<>())));
-//        assertEquals(gson.toJson(new GetCandidateDtoResponse(candidate)), candidateService.getCandidate(gson.toJson(new GetCandidateDtoRequest(voter.getLogin()))));
-//    }
+    @Test
+    public void getCandidateTest_Success() throws ServerException {
+        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Voter voter3 = new Voter(randomString(), randomString(), null, randomString(),
+                1, 1, randomString(), "Pas&77123");
+        Candidate candidate = new Candidate(voter);
+        Candidate candidate2 = new Candidate(voter2);
+        Candidate candidate3 = new Candidate(voter3);
+        candidateService.getIdeas().put(candidate, new ArrayList<>());
+        candidateService.getIdeas().put(candidate2, new ArrayList<>());
+        candidateService.getIdeas().put(candidate3, new ArrayList<>());
+        assertEquals(gson.toJson(new GetCandidateDtoResponse(candidate3)), candidateService.getCandidate(gson.toJson(new GetCandidateDtoRequest(voter3.getLogin()))));
+    }
+
+    @Test
+    public void getCandidateTest_Not_Found() {
+        try {
+            candidateService.getCandidate(gson.toJson(new GetCandidateDtoRequest(randomString())));
+        } catch (ServerException ex) {
+            assertEquals(ExceptionErrorCode.CANDIDATE_NOT_FOUND, ex.getErrorCode());
+        }
+    }
+
+    @Test
+    public void getCandidate_Field_Is_Null() throws ServerException {
+        assertNull(candidateService.getCandidate(gson.toJson(new GetCandidateDtoRequest(null))));
+    }
 
 
     private String randomString() {

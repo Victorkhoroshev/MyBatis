@@ -1,8 +1,8 @@
 package net.thumbtack.school.elections.server.dto.request;
 
 public class IsCommissionerDtoRequest {
-    private String login;
-    private String password;
+    private final String login;
+    private final String password;
 
     public IsCommissionerDtoRequest(String login, String password) {
         this.login = login;
@@ -15,9 +15,5 @@ public class IsCommissionerDtoRequest {
 
     public String getPassword() {
         return password;
-    }
-
-    public boolean requiredFieldsIsNotNull(){
-        return login != null && password != null;
     }
 }

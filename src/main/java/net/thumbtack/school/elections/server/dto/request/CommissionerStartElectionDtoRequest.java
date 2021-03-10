@@ -4,7 +4,7 @@ import net.thumbtack.school.elections.server.model.Candidate;
 import java.util.Set;
 
 public class CommissionerStartElectionDtoRequest {
-    private Set<Candidate> candidateSet;
+    private final Set<Candidate> candidateSet;
 
     public CommissionerStartElectionDtoRequest(Set<Candidate> candidateSet) {
         this.candidateSet = candidateSet;

@@ -1,7 +1,7 @@
 package net.thumbtack.school.elections.server.dto.request;
 
 public class SetIsElectionStopDtoRequest {
-    private boolean isElectionStop;
+    private final boolean isElectionStop;
 
     public SetIsElectionStopDtoRequest(boolean isElectionStop) {
         this.isElectionStop = isElectionStop;

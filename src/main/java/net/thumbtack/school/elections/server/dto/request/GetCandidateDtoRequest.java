@@ -1,7 +1,7 @@
 package net.thumbtack.school.elections.server.dto.request;
 
 public class GetCandidateDtoRequest {
-    private String login;
+    private final String login;
 
     public GetCandidateDtoRequest(String login) {
         this.login = login;

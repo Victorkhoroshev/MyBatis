@@ -3,7 +3,7 @@ package net.thumbtack.school.elections.server.dto.request;
 import net.thumbtack.school.elections.server.model.Voter;
 
 public class RemoveAllRatingDtoRequest {
-    private Voter voter;
+    private final Voter voter;
 
     public RemoveAllRatingDtoRequest(Voter voter) {
         this.voter = voter;

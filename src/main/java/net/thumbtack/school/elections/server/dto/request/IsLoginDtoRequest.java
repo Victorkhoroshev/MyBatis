@@ -1,7 +1,7 @@
 package net.thumbtack.school.elections.server.dto.request;
 
 public class IsLoginDtoRequest {
-    private String token;
+    private final String token;
 
     public IsLoginDtoRequest(String token) {
         this.token = token;

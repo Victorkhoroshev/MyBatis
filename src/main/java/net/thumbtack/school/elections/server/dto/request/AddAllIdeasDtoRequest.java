@@ -5,8 +5,8 @@ import net.thumbtack.school.elections.server.model.Voter;
 import java.util.List;
 
 public class AddAllIdeasDtoRequest {
-    private Voter voter;
-    private List<String> ideas;
+    private final Voter voter;
+    private final List<String> ideas;
 
     public AddAllIdeasDtoRequest(Voter voter, List<String> ideas) {
         this.voter = voter;

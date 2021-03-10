@@ -13,7 +13,7 @@ public class Idea implements Comparable<Idea>, Serializable {
     private final String textOfIdea;
     private int sum;
     private Float rating;
-    private Map<Voter, Integer> votedVoters;
+    private Map<String, Integer> votedVoters;
     private boolean isCommunity;
 
     public Idea(String key, Voter author, String idea) {
@@ -23,14 +23,14 @@ public class Idea implements Comparable<Idea>, Serializable {
         setRating(5);
         setSum(5);
         setVotedVoters(new HashMap<>());
-        votedVoters.put(author, 5);
+        votedVoters.put(author.getLogin(), 5);
     }
 
-    private void setVotedVoters(Map<Voter, Integer> votedVoters) {
+    private void setVotedVoters(Map<String, Integer> votedVoters) {
         this.votedVoters = votedVoters;
     }
 
-    public Map<Voter, Integer> getVotedVoters() {
+    public Map<String, Integer> getVotedVoters() {
         return votedVoters;
     }
 

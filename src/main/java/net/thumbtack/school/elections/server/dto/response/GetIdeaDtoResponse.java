@@ -4,7 +4,7 @@ import net.thumbtack.school.elections.server.model.Idea;
 import java.util.Objects;
 
 public class GetIdeaDtoResponse {
-    private Idea idea;
+    private final Idea idea;
 
     public GetIdeaDtoResponse(Idea idea) {
         this.idea = idea;

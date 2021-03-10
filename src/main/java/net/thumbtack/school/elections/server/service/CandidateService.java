@@ -217,7 +217,7 @@ public class CandidateService implements Serializable {
             if (candidate == null) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.CANDIDATE_NOT_FOUND.getMessage()));
             }
-            if (idea.getAuthor() != voter) {
+            if (!idea.getAuthor().equals(voter)) {
                 ideas.get(candidate).remove(idea);
             }
             return EMPTY_JSON;
@@ -265,6 +265,10 @@ public class CandidateService implements Serializable {
             throw new ServerException(ExceptionErrorCode.CANDIDATE_NOT_FOUND);
         }
         return null;
+    }
+
+    public Map<Candidate, List<Idea>> getIdeas() {
+        return ideas;
     }
 
     public ContextService getContextService() {

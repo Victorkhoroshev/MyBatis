@@ -109,8 +109,8 @@ public class IdeaService implements Serializable {
             Voter voter = getVoterDtoResponse.getVoter();
             int rating = request.getRating();
             for (Idea idea : ideas) {
-                if (idea.getKey().equals(ideaKey) && !idea.getVotedVoters().containsKey(voter)) {
-                    idea.getVotedVoters().put(voter, rating);
+                if (idea.getKey().equals(ideaKey) && !idea.getVotedVoters().containsKey(voter.getLogin())) {
+                    idea.getVotedVoters().put(voter.getLogin(), rating);
                     idea.setSum(idea.getSum() + rating);
                     float newRating = (float) idea.getSum() / idea.getVotedVoters().size();
                     idea.setRating(newRating);
@@ -146,12 +146,11 @@ public class IdeaService implements Serializable {
             Voter voter = getVoterDtoResponse.getVoter();
             int rating = request.getRating();
             for (Idea idea : ideas) {
-                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter) && idea.getAuthor() != voter) {
-                    idea.setSum(idea.getSum() + rating - idea.getVotedVoters().get(voter));
-                    idea.getVotedVoters().put(voter, rating);
+                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) && !idea.getAuthor().equals(voter)) {
+                    idea.setSum(idea.getSum() + rating - idea.getVotedVoters().get(voter.getLogin()));
+                    idea.getVotedVoters().put(voter.getLogin(), rating);
                     float newRating = (float) idea.getSum() / idea.getVotedVoters().size();
                     idea.setRating(newRating);
-                    break;
                 }
             }
             return EMPTY_JSON;
@@ -182,9 +181,9 @@ public class IdeaService implements Serializable {
                     new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
             Voter voter = getVoterDtoResponse.getVoter();
             for (Idea idea : ideas) {
-                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter) && idea.getAuthor() != voter) {
-                    idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter));
-                    idea.getVotedVoters().remove(voter);
+                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) && !idea.getAuthor().equals(voter)) {
+                    idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter.getLogin()));
+                    idea.getVotedVoters().remove(voter.getLogin());
                     float newRating = (float) idea.getSum() / idea.getVotedVoters().size();
                     idea.setRating(newRating);
                     break;
@@ -206,12 +205,12 @@ public class IdeaService implements Serializable {
         RemoveAllRatingDtoRequest request = gson.fromJson(requestJsonString, RemoveAllRatingDtoRequest.class);
         Voter voter = request.getVoter();
         for (Idea idea : ideas) {
-            if (idea.getVotedVoters().containsKey(voter) && idea.getAuthor() != voter) {
-                idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter));
-                idea.getVotedVoters().remove(voter);
+            if (idea.getVotedVoters().containsKey(voter.getLogin()) && !idea.getAuthor().equals(voter)) {
+                idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter.getLogin()));
+                idea.getVotedVoters().remove(voter.getLogin());
                 float newRating = (float) idea.getSum() / idea.getVotedVoters().size();
                 idea.setRating(newRating);
-                idea.getVotedVoters().remove(voter);
+                idea.getVotedVoters().remove(voter.getLogin());
             }
         }
         setIdeaCommunity(voter.getLogin());
@@ -278,23 +277,6 @@ public class IdeaService implements Serializable {
             return gson.toJson(new ErrorDtoResponse(NULL_VALUE));
         }
         return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
-    }
-
-    /**
-     * Get unique idea id from idea, with a specific text and author.
-     * @param voter idea's author.
-     * @param text text of idea.
-     * @return Unique idea id.
-     * @throws ServerException if no idea has such an author and text.
-     */
-    public String getKey(String requestJsonString) throws ServerException {
-        GetKeyDtoRequest request = gson.fromJson(requestJsonString, GetKeyDtoRequest.class);
-        for (Idea idea : ideas) {
-            if (idea.getAuthor() == request.getVoter() && idea.getTextOfIdea().equals(request.getText())) {
-                return gson.toJson(new GetKeyDtoResponse(idea.getKey()));
-            }
-        }
-        return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.IDEA_NOT_FOUND.getMessage()));
     }
 
     public List<Idea> getIdeas() {
