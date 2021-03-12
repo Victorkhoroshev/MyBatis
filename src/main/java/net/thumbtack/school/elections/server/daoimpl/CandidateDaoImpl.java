@@ -3,11 +3,10 @@ package net.thumbtack.school.elections.server.daoimpl;
 import net.thumbtack.school.elections.server.dao.CandidateDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Candidate;
-import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
-import net.thumbtack.school.elections.server.service.ServerException;
 
 public class CandidateDaoImpl implements CandidateDao {
     private final Database database = Database.getInstance();
+
     /**
      * Get candidate by his login from database.
      * @param login the login candidate, who already logged out from the server.

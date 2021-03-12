@@ -1,11 +1,9 @@
 package net.thumbtack.school.elections.server;
+
 import com.google.gson.Gson;
-import net.thumbtack.school.elections.server.database.Database;
-import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Context;
 import net.thumbtack.school.elections.server.service.*;
 import java.io.*;
-import java.util.HashSet;
 
 public class Server {
     private Gson gson;
@@ -28,7 +26,8 @@ public class Server {
                 candidateService = context.getCandidateService();
                 electionService = context.getElectionService();
                 contextService = new ContextService(context);
-                commissionerService = new CommissionerService(sessionService, electionService, contextService, gson, candidateService);
+                commissionerService = new CommissionerService(sessionService, electionService, contextService, gson,
+                        candidateService);
                 voterService = new VoterService(sessionService, contextService, gson, ideaService);
             }
         } else {
@@ -37,7 +36,8 @@ public class Server {
             voterService = new VoterService(sessionService, contextService, gson, ideaService);
             candidateService = new CandidateService(contextService, gson, sessionService, voterService, ideaService);
             electionService = new ElectionService(contextService, gson, sessionService, candidateService);
-            commissionerService = new CommissionerService(sessionService, electionService, contextService, gson, candidateService);
+            commissionerService = new CommissionerService(sessionService, electionService, contextService, gson,
+                    candidateService);
         }
     }
 
@@ -263,7 +263,8 @@ public class Server {
     /**
      * User get candidates map.
      * @param requestJsonString gson element with field: String token (voter's of candidate's unique id).
-     * @return If field is valid and if the method has not caught any exception: gson element with field: Map<Candidate, List<Idea>> candidateMap(candidates map with
+     * @return If field is valid and if the method has not caught any exception: gson element with field: Map<Candidate,
+     * List<Idea>> candidateMap(candidates map with
      * their program).
      * If user logout: gson element with field: String error: "Сессия пользователя не найдена.".
      * If field is not valid: gson element with field: "String error: "Некорректный запрос.".
@@ -275,7 +276,8 @@ public class Server {
     /**
      * User get all ideas.
      * @param requestJsonString gson element with field: String token (voter's of candidate's unique id).
-     * @return If field is valid and if the method has not caught any exception: gson element with field: Map<Idea, Float> ideas (ideas with their rating,
+     * @return If field is valid and if the method has not caught any exception: gson element with field:
+     * Map<Idea, Float> ideas (ideas with their rating,
      * sorted by rating).
      * If user logout: gson element with field: String error: "Сессия пользователя не найдена.".
      * If field is not valid: gson element with field: String error: "Некорректный запрос.".
@@ -288,7 +290,8 @@ public class Server {
      * User get all some voters ideas.
      * @param requestJsonString gson element with fields: String token (voter's of candidate's unique id),
      * List<String> logins (list of logins some voters).
-     * @return If all fields is valid and if the method has not caught any exception: List<Idea> ideas (list of some voters ideas).
+     * @return If all fields is valid and if the method has not caught any exception: List<Idea> ideas
+     * (list of some voters ideas).
      * If user logout: gson element with field: String error: "Сессия пользователя не найдена.".
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
@@ -309,24 +312,26 @@ public class Server {
 
     /**
      * Voter vote for a someone candidate if election start or not stop.
-     * @param requestJsonStrong gson element with fields: String token (voter's unique id),
+     * @param requestJsonString gson element with fields: String token (voter's unique id),
      * String candidateLogin (candidate's login).
      * @return If all fields is valid and if the method has not caught any exception: empty gson element.
      * If election is not start: gson element with field: String error: "Голосование не началось.".
      * If election already stop: gson element with field: String error: "Голосование закончилось.".
      * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
-     * If in ideas map not contains candidate with this login: gson element with field: String error: "Кандидат не найден.".
+     * If in ideas map not contains candidate with this login: gson element with field: String error:
+     * "Кандидат не найден.".
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
-    public String vote(String requestJsonStrong) {
-        return electionService.vote(requestJsonStrong);
+    public String vote(String requestJsonString) {
+        return electionService.vote(requestJsonString);
     }
 
     /**
      * Commissioner get election result.
      * @param requestJsonString gson element with field: String token(commissioner's unique id).
-     * @return If field is valid and if the method has not caught any exception: gson element with field: Set<Candidate> candidateSet(candidates set).
-     * If the token does not belong to chairman: gson element with field: String error: "Вы не председатель коммиссии." .
+     * @return If field is valid and if the method has not caught any exception: gson element with field:
+     * Set<Candidate> candidateSet(candidates set).
+     * If the token does not belong to chairman: gson element with field: String error: "Вы не председатель коммиссии.".
      * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getElectionResult(String requestJsonString) {

@@ -18,5 +18,4 @@ public class ConfirmationCandidacyDtoRequest {
     public List<String> getCandidateIdeas() {
         return candidateIdeas;
     }
-
 }

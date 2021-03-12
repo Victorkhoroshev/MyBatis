@@ -16,11 +16,11 @@ public class Voter extends User implements Serializable {
     private final @Nullable Integer apartment;
     private boolean isHasOwnCandidate;
 
-    public Voter (String firstName, String lastName, @Nullable String patronymic, String street, Integer house, @Nullable Integer apartment, String login, String password) {
+    public Voter (String firstName, String lastName, @Nullable String patronymic, String street, Integer house,
+                  @Nullable Integer apartment, String login, String password) {
         super(login, password);
         this.firstName = firstName.toLowerCase(Locale.ROOT);
         this.lastName = lastName.toLowerCase(Locale.ROOT);
-        //REVU:вынесите эту логику в сеттер
         if( patronymic != null) {
             this.patronymic = patronymic.toLowerCase(Locale.ROOT);
         } else {
@@ -29,8 +29,6 @@ public class Voter extends User implements Serializable {
         this.street = street.toLowerCase(Locale.ROOT);
         this.house = house;
         this.apartment = apartment;
-        //REVU: по умолчанию boolean переменная и так равна false, может не имеет смысла ее выставлять
-//        setHasOwnCandidate(false);
     }
 
     public Voter (String firstName, String lastName, String street, Integer house,

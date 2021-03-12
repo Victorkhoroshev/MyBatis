@@ -5,7 +5,6 @@ import net.thumbtack.school.elections.server.dao.CandidateDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Voter;
-import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.service.ServerException;
 import org.junit.jupiter.api.Test;
 import java.io.IOException;

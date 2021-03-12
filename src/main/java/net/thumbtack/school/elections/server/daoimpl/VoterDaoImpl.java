@@ -19,7 +19,6 @@ public class VoterDaoImpl implements VoterDao {
      * @param login the login voter, who already logged out from the server.
      * @return The voter who owns this login or null if voter not found.
      */
-
     @Override
     public Voter get(String login) {
         Voter voter;

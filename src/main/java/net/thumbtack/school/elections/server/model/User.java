@@ -1,8 +1,9 @@
 package net.thumbtack.school.elections.server.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class User {
+public class User implements Serializable {
     private final String login;
     private final String password;
 

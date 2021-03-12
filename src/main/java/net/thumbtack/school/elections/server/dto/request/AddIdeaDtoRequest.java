@@ -16,5 +16,4 @@ public class AddIdeaDtoRequest {
     public String getToken() {
         return token;
     }
-
 }

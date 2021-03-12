@@ -1,14 +1,11 @@
 package net.thumbtack.school.elections.server.daoimpl;
-import net.thumbtack.school.elections.server.Server;
 import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Voter;
 import net.thumbtack.school.elections.server.service.ServerException;
 import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;

@@ -6,10 +6,7 @@ import net.thumbtack.school.elections.server.daoimpl.CommissionerDaoImpl;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetCommissionerDtoResponse;
-import net.thumbtack.school.elections.server.dto.response.GetElectionResultDtoResponse;
 import net.thumbtack.school.elections.server.model.Commissioner;
-
-import java.util.List;
 
 public class CommissionerService {
     private final CommissionerDao dao;
@@ -22,7 +19,8 @@ public class CommissionerService {
 
     private static final String NULL_VALUE = "Некорректный запрос.";
 
-    public CommissionerService(SessionService sessionService, ElectionService electionService, ContextService contextService, Gson gson, CandidateService candidateService) {
+    public CommissionerService(SessionService sessionService, ElectionService electionService,
+                               ContextService contextService, Gson gson, CandidateService candidateService) {
         this.sessionService = sessionService;
         this.electionService = electionService;
         this.contextService = contextService;
@@ -34,10 +32,14 @@ public class CommissionerService {
 
     /**
      * Login commissioner.
-     * @param login the login voter, who already logged out from the server.
-     * @param password the password commissioner, who already logged out from the server.
-     * @return Unique commissioner's id.
-     * @throws ServerException if login not found or password incorrect for login or election start.
+     * @param requestJsonString gson element. Fields: String login, String password.
+     * @return If all fields is valid and if the method has not caught any exception: gson element with generated
+     * unique commissioner's id.
+     * If some field or request is not null: gson element with field: String error:
+     * "Пожалуйста, введите логин и пароль.".
+     * If login/password in not valid: gson element with field: String error:(some problem).
+     * If pass is not correct: gson element with field: String error: "Неверный пароль.".
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
      */
     public String login(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -63,7 +65,7 @@ public class CommissionerService {
 
     /**
      * Commissioner verification.
-     * @param token unique commissioner's id.
+     * @param requestJsonString requestJsonString gson element with field: String token (commissioner's unique id).
      * @return If commissioner's session exist: true.
      * If commissioner's session not exist: false.
      */
@@ -74,7 +76,12 @@ public class CommissionerService {
 
     /**
      * Logout commissioner.
-     * @param token unique commissioner's id.
+     * If requestJsonString contain token, owned candidate, checks: is the candidacy confirmed.
+     * Set all User's ideas community(null)
+     * @param requestJsonString gson element with field: String token commissioner's unique id.
+     * @return If field is valid and if the method has not caught any exception: empty gson element.
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If voter already logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String logout(String requestJsonString) {
         LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
@@ -89,17 +96,18 @@ public class CommissionerService {
     }
 
     /**
-     * Start election.
-     * @param token commissioner's unique id.
-     * @param candidateSet set candidates, who confirmed their candidacy.
-     * @throws ServerException if the token does not belong to chairman.
+     * Commissioner start election.
+     * @param requestJsonString gson element with field: String token(commissioner's unique id).
+     * @return If field is valid and if the method has not caught any exception: empty gson element.
+     * If the token does not belong to chairman: gson element with field: String error: "Вы не председатель коммиссии.".
+     * If field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String startElection(String requestJsonString) {
         StartElectionDtoRequest request = gson.fromJson(requestJsonString, StartElectionDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(gson.toJson(
-                    new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
+            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(
+                    gson.toJson(new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
             if (!getCommissionerDtoResponse.getCommissioner().isChairman()) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage()));
             }
@@ -113,18 +121,19 @@ public class CommissionerService {
     }
 
     /**
-     * Get election result.
-     * If result contains only one candidate, than election stop.
-     * @param token commissioner's unique id.
-     * @return Candidates set.
-     * @throws ServerException if the token does not belong to chairman.
+     * Commissioner get election result.
+     * @param requestJsonString gson element with field: String token(commissioner's unique id).
+     * @return If field is valid and if the method has not caught any exception: gson element with field:
+     * Set<Candidate> candidateSet(candidates set).
+     * If the token does not belong to chairman: gson element with field: String error: "Вы не председатель коммиссии.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getElectionResult(String requestJsonString) {
         GetElectionResultDtoRequest request = gson.fromJson(requestJsonString, GetElectionResultDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(gson.toJson(
-                    new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
+            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(
+                    gson.toJson(new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
             if (!getCommissionerDtoResponse.getCommissioner().isChairman()) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage()));
             }

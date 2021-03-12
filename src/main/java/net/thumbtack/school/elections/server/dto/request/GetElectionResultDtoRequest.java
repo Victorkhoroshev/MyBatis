@@ -10,5 +10,4 @@ public class GetElectionResultDtoRequest {
     public String getToken() {
         return token;
     }
-
 }

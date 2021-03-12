@@ -1,12 +1,10 @@
 package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
-import net.thumbtack.school.elections.server.Server;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Voter;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -14,8 +12,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
-import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,8 +26,8 @@ public class ElectionServiceTest {
     private SessionService sessionService;
     @Mock
     private CandidateService candidateService;
-    private Gson gson;
-    private ElectionService electionService;
+    private final Gson gson;
+    private final ElectionService electionService;
 
     public ElectionServiceTest() {
         MockitoAnnotations.initMocks(this);
@@ -46,7 +42,8 @@ public class ElectionServiceTest {
         Set<Candidate> candidateSet = new HashSet<>();
         candidateSet.add(new Candidate(getNewVoter()));
         candidateSet.add(new Candidate(getNewVoter()));
-        assertEquals("", electionService.startElection(gson.toJson(new CommissionerStartElectionDtoRequest(candidateSet))));
+        assertEquals("", electionService.startElection(
+                gson.toJson(new CommissionerStartElectionDtoRequest(candidateSet))));
     }
 
     @Test
@@ -56,8 +53,10 @@ public class ElectionServiceTest {
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(getNewVoter());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString())))).thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
+        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), randomString()))));
         assertEquals(1, electionService.getCandidateMap().get(candidate).size());
         assertEquals(0, electionService.getVsEveryone().size());
@@ -71,8 +70,10 @@ public class ElectionServiceTest {
         Candidate candidate = new Candidate(getNewVoter());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
         electionService.getCandidateMap().put(new Candidate(getNewVoter()), new ArrayList<>());
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString())))).thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
+        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), null))));
         assertEquals(0, electionService.getCandidateMap().get(candidate).size());
         assertEquals(1, electionService.getVsEveryone().size());
@@ -86,8 +87,10 @@ public class ElectionServiceTest {
         Candidate candidate = new Candidate(getNewVoter());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
         electionService.getVsEveryone().add(voter);
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString())))).thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
+        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), randomString()))));
         assertEquals(0, electionService.getCandidateMap().get(candidate).size());
         assertEquals(1, electionService.getVsEveryone().size());
@@ -101,8 +104,10 @@ public class ElectionServiceTest {
         Candidate candidate = new Candidate(getNewVoter());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
         electionService.getCandidateMap().get(candidate).add(voter);
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString())))).thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
+        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), randomString()))));
         assertEquals(1, electionService.getCandidateMap().get(candidate).size());
         assertEquals(0, electionService.getVsEveryone().size());
@@ -115,8 +120,10 @@ public class ElectionServiceTest {
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(voter);
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString())))).thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
+        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), voter.getLogin()))));
         assertEquals(0, electionService.getCandidateMap().get(candidate).size());
         assertEquals(0, electionService.getVsEveryone().size());
@@ -126,7 +133,8 @@ public class ElectionServiceTest {
     public void voteTest_Field_Is_Not_Valid() throws ServerException {
         when(electionService.getContextService().isElectionStart()).thenReturn(true);
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), electionService.vote(gson.toJson(new VoteDtoRequest(null, randomString()))));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
+                electionService.vote(gson.toJson(new VoteDtoRequest(null, randomString()))));
         verify(electionService.getSessionService(), times(0)).getVoter(anyString());
         verify(electionService.getCandidateService(), times(0)).getCandidate(anyString());
     }
@@ -136,7 +144,8 @@ public class ElectionServiceTest {
     public void voteTest_Json_Is_Null() throws ServerException {
         when(electionService.getContextService().isElectionStart()).thenReturn(true);
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), electionService.vote(null));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
+                electionService.vote(null));
         verify(electionService.getSessionService(), times(0)).getVoter(anyString());
         verify(electionService.getCandidateService(), times(0)).getCandidate(anyString());
     }
@@ -144,14 +153,16 @@ public class ElectionServiceTest {
     @Test
     public void voteTest_Election_Not_Start() {
         when(electionService.getContextService().isElectionStart()).thenReturn(false);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_NOT_START.getMessage())), electionService.vote(randomString()));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_NOT_START.getMessage())),
+                electionService.vote(randomString()));
     }
 
     @Test
     public void voteTest_Election_Already_Stop() {
         when(electionService.getContextService().isElectionStart()).thenReturn(true);
         when(electionService.getContextService().isElectionStop()).thenReturn(true);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_STOP.getMessage())), electionService.vote(randomString()));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_STOP.getMessage())),
+                electionService.vote(randomString()));
     }
 
     @Test
@@ -174,7 +185,8 @@ public class ElectionServiceTest {
         electionService.getCandidateMap().get(candidate1).add(voter2);
         electionService.getCandidateMap().get(candidate2).add(voter3);
         electionService.getVsEveryone().add(voter4);
-        when(electionService.getContextService().setIsElectionStop(anyString())).thenReturn(gson.toJson(new SetIsElectionStopDtoResponse(true)));
+        when(electionService.getContextService().setIsElectionStop(anyString()))
+                .thenReturn(gson.toJson(new SetIsElectionStopDtoResponse(true)));
         assertEquals(gson.toJson(new GetElectionResultDtoResponse(candidateSet)), electionService.getElectionResult());
         verify(electionService.getContextService(), times(1)).setIsElectionStop(anyString());
     }
@@ -199,7 +211,8 @@ public class ElectionServiceTest {
         electionService.getCandidateMap().get(candidate2).add(voter2);
         electionService.getVsEveryone().add(voter3);
         electionService.getVsEveryone().add(voter4);
-        when(electionService.getContextService().setIsElectionStop(anyString())).thenReturn(gson.toJson(new SetIsElectionStopDtoResponse(true)));
+        when(electionService.getContextService().setIsElectionStop(anyString()))
+                .thenReturn(gson.toJson(new SetIsElectionStopDtoResponse(true)));
         assertEquals(gson.toJson(new GetElectionResultDtoResponse(candidateSet)), electionService.getElectionResult());
         verify(electionService.getContextService(), times(1)).setIsElectionStop(anyString());
     }
@@ -227,7 +240,8 @@ public class ElectionServiceTest {
         electionService.getCandidateMap().get(candidate2).add(voter3);
         electionService.getCandidateMap().get(candidate2).add(voter4);
         electionService.getVsEveryone().add(voter5);
-        when(electionService.getContextService().setIsElectionStop(anyString())).thenReturn(gson.toJson(new SetIsElectionStopDtoResponse(true)));
+        when(electionService.getContextService().setIsElectionStop(anyString()))
+                .thenReturn(gson.toJson(new SetIsElectionStopDtoResponse(true)));
         assertEquals(gson.toJson(new GetElectionResultDtoResponse(candidateSet)), electionService.getElectionResult());
         verify(electionService.getContextService(), times(0)).setIsElectionStop(anyString());
     }

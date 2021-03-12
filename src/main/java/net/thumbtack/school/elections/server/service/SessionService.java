@@ -24,9 +24,8 @@ public class SessionService {
 
     /**
      * Get voter session.
-     * @param voter voter, from whom we want to get a session.
+     * @param requestJsonString gson element with fields: Voter voter, from whom we want to get a session.
      * @return Voter session.
-     * @throws ServerException if voter logout.
      */
     public String getVoterSession(String requestJsonString) {
         GetVoterSessionDtoRequest request = gson.fromJson(requestJsonString, GetVoterSessionDtoRequest.class);
@@ -38,12 +37,12 @@ public class SessionService {
 
     /**
      * Get commissioner session.
-     * @param commissioner commissioner, from whom we want to get a session.
+     * @param requestJsonString gson element with fields: Commissioner commissioner, from whom we want to get a session.
      * @return Commissioner's session.
-     * @throws ServerException if commissioner logout.
      */
     public String getCommissionerSession(String requestJsonString) {
-        GetCommissionerSessionDtoRequest request = gson.fromJson(requestJsonString, GetCommissionerSessionDtoRequest.class);
+        GetCommissionerSessionDtoRequest request = gson.fromJson(requestJsonString,
+                GetCommissionerSessionDtoRequest.class);
         if (!commissionerSessions.containsKey(request.getCommissioner())) {
             return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage()));
         }
@@ -52,7 +51,7 @@ public class SessionService {
 
     /**
      * Get voter by token.
-     * @param token unique voter's id.
+     * @param requestJsonString gson element with fields: String token (unique voter's id).
      * @return Voter who owns this token.
      * @throws ServerException if voter logout.
      */
@@ -68,7 +67,7 @@ public class SessionService {
 
     /**
      * Get commissioner by token.
-     * @param token unique commissioner's id.
+     * @param requestJsonString gson element with fields: String token (unique commissioner's id).
      * @return If commissioner login: commissioner who owns this token.
      * If commissioner logout: null.
      */
@@ -84,7 +83,7 @@ public class SessionService {
 
     /**
      * Checks: login voter or commissioner.
-     * @param token unique user id.
+     * @param requestJsonString gson element with fields: String token (unique user id).
      * @return If voter or commissioner login: true.
      * If voter or commissioner logout: false.
      */
@@ -105,7 +104,7 @@ public class SessionService {
 
     /**
      * Put voter in voter's map and his generated unique id.
-     * @param voter voter who hasn't logged in yet.
+     * @param requestJsonString gson element with fields: Voter voter who hasn't logged in yet.
      * @return generated unique id.
      */
     public String loginVoter(String requestJsonString) {
@@ -117,7 +116,7 @@ public class SessionService {
 
     /**
      * Put commissioner in commissioner's map and his generated unique id.
-     * @param commissioner commissioner who hasn't logged in yet.
+     * @param requestJsonString gson element with fields: Commissioner commissioner who hasn't logged in yet.
      * @return Generated unique id.
      */
     public String loginCommissioner(String requestJsonString) {
@@ -129,7 +128,7 @@ public class SessionService {
 
     /**
      * Remove from voter's map voter.
-     * @param token unique voter's id.
+     * @param requestJsonString gson element with fields: String token (unique voter's id).
      * @throws ServerException if voter logout.
      */
     public String logoutVoter(String requestJsonString) throws ServerException {
@@ -142,7 +141,7 @@ public class SessionService {
 
     /**
      * Remove commissioner from commissioner's map.
-     * @param token unique commissioner's id.
+     * @param requestJsonString gson element with fields: String token (unique commissioner's id).
      */
     public String logoutCommissioner(String requestJsonString) throws ServerException {
         LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);

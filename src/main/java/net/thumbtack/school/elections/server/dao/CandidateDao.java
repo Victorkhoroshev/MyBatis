@@ -2,6 +2,7 @@ package net.thumbtack.school.elections.server.dao;
 
 import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.service.ServerException;
+
 public interface CandidateDao {
 
     Candidate get(String s) throws ServerException;

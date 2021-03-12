@@ -23,7 +23,8 @@ public class ElectionService implements Serializable {
     private static final transient String EMPTY_JSON = "";
     private static final transient String NULL_VALUE = "Некорректный запрос.";
 
-    public ElectionService(ContextService contextService, Gson gson, SessionService sessionService, CandidateService candidateService) {
+    public ElectionService(ContextService contextService, Gson gson, SessionService sessionService,
+                           CandidateService candidateService) {
         this.contextService = contextService;
         this.gson = gson;
         this.sessionService = sessionService;
@@ -34,7 +35,9 @@ public class ElectionService implements Serializable {
     /**
      * Start election, set "is election start" - true, create new candidate's map with candidates and their voters,
      * filling with the passed values, create new empty versus everyone set.
-     * @param candidateSet set of candidates who have confirmed their candidacy.
+     * @param requestJsonString gson element with field: Set candidateSet
+     * (set of candidates who have confirmed their candidacy).
+     * @return empty gson element.
      */
     public String startElection(String requestJsonString) {
         CommissionerStartElectionDtoRequest request =
@@ -49,13 +52,16 @@ public class ElectionService implements Serializable {
     }
 
     /**
-     * If the voter did not contains in candidate's map and list versus everyone and the candidate is not equal null:
-     * in the value of candidate from candidate's map put this voter.
-     * If the voter did not contains in candidate's map and list versus everyone the candidate is equal null:
-     * versus everyone list add this voter.
-     * @param voter voter who wand vote.
-     * @param candidate candidate to vote for.
-     * @throws ServerException if election not start or election already stop.
+     * Voter vote for a someone candidate if election start or not stop.
+     * @param requestJsonString gson element with fields: String token (voter's unique id),
+     * String candidateLogin (candidate's login).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If election is not start: gson element with field: String error: "Голосование не началось.".
+     * If election already stop: gson element with field: String error: "Голосование закончилось.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If in ideas map not contains candidate with this login: gson element with field: String error:
+     * "Кандидат не найден.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String vote(String requestJsonString) {
         if (!contextService.isElectionStart()) {
@@ -76,7 +82,8 @@ public class ElectionService implements Serializable {
                 if (request.getCandidateLogin() == null) {
                     vsEveryone.add(voter);
                 } else if (!voter.getLogin().equals(request.getCandidateLogin())) {
-                    Candidate candidate = gson.fromJson(candidateService.getCandidate(request.getCandidateLogin()), GetCandidateDtoResponse.class).getCandidate();
+                    Candidate candidate = gson.fromJson(candidateService.getCandidate(
+                            request.getCandidateLogin()), GetCandidateDtoResponse.class).getCandidate();
                     candidateMap.get(candidate).add(voter);
                 }
             }
@@ -109,7 +116,8 @@ public class ElectionService implements Serializable {
         candidateSet.add(candidate);
         if (candidate != null) {
             for (Map.Entry<Candidate, List<Voter>> entry : candidateMap.entrySet()) {
-                if (entry.getValue().size() == candidateMap.get(candidate).size() && !entry.getValue().equals(candidateMap.get(candidate))) {
+                if (entry.getValue().size() == candidateMap.get(candidate).size() &&
+                        !entry.getValue().equals(candidateMap.get(candidate))) {
                     candidateSet.add(entry.getKey());
                 }
             }

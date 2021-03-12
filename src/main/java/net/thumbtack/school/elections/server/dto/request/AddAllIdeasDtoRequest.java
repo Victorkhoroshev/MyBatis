@@ -1,7 +1,6 @@
 package net.thumbtack.school.elections.server.dto.request;
 
 import net.thumbtack.school.elections.server.model.Voter;
-
 import java.util.List;
 
 public class AddAllIdeasDtoRequest {

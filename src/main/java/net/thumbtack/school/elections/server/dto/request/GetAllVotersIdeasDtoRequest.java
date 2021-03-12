@@ -18,5 +18,4 @@ public class GetAllVotersIdeasDtoRequest {
     public List<String> getLogins() {
         return logins;
     }
-
 }

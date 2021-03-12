@@ -7,7 +7,6 @@ import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Context;
 import net.thumbtack.school.elections.server.model.Voter;
 import org.junit.jupiter.api.Test;
-
 import java.io.IOException;
 import java.util.*;
 

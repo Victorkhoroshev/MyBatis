@@ -22,5 +22,4 @@ public class ChangeRatingDtoRequest {
     public int getRating() {
         return rating;
     }
-
 }

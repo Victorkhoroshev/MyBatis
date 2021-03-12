@@ -22,6 +22,7 @@ public class Database {
         }
         return instance;
     }
+
     public Set<Commissioner> getCommissionerSet() {
         return commissionerSet;
     }

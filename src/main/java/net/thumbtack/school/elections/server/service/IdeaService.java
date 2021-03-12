@@ -27,14 +27,20 @@ public class IdeaService implements Serializable {
     }
 
     /**
-     * Get all ideas sorted in descending order of rating.
-     * @return A map of ideas and their rating.
+     * User get all ideas.
+     * @param requestJsonString gson element with field: String token (voter's of candidate's unique id).
+     * @return If field is valid and if the method has not caught any exception: gson element with field:
+     * Map<Idea, Float> ideas (ideas with their rating,
+     * sorted by rating).
+     * If user logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getIdeas(String requestJsonString) {
         GetAllIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllIdeasDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))), IsLoginDtoResponse.class).isLogin()) {
+            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(
+                    request.getToken()))), IsLoginDtoResponse.class).isLogin()) {
                 Map<Idea, Float> sortedMap = new TreeMap<>();
                 for (Idea idea : ideas) {
                     sortedMap.put(idea, idea.getRating());
@@ -50,10 +56,15 @@ public class IdeaService implements Serializable {
     }
 
     /**
-     * Generate new idea and put it in ideas list.
-     * @param voter voter, who expressed his idea.
-     * @param idea text of idea.
-     * @throws ServerException if election already start.
+     * User add new Idea.
+     * If token belongs to the candidate: candidate add it idea into yourself program
+     * @param requestJsonString gson element with fields: String idea (text of idea),
+     * String token voter's unique id.
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If no idea has the given voter's login and text: gson element with field: String error: "Идея не найдена.".
      */
     public String addIdea(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -78,7 +89,7 @@ public class IdeaService implements Serializable {
 
     /**
      * Set all ideas publicly owned by the logout voter.
-     * @param voter voter, who logout.
+     * @param login voter's login, who logout.
      */
     public void setIdeaCommunity(String login) {
         for (Idea idea: ideas) {
@@ -89,12 +100,15 @@ public class IdeaService implements Serializable {
     }
 
     /**
-     * Estimate idea, indicating it's rating and key
-     * a new rating is calculated based on the passed value.
-     * @param ideaKey unique idea's id.
-     * @param rating number in the range from 1 to 5.
-     * @param voter voter, who wants to estimate an idea.
-     * @throws ServerException if rating not range from 1 to 5 or election already start.
+     * User estimate some idea.
+     * @param requestJsonString gson element with fields: String ideaKey (unique idea's key),
+     * int rating (number for estimate), String token (voter's or candidate's unique id).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If rating not range from 1 to 5: gson element with field: String error: "Оценка должна быть от 1 до 5.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If no idea has the given idea's key: gson element with field: String error: "Идея не найдена.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String estimate(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -125,13 +139,15 @@ public class IdeaService implements Serializable {
     }
 
     /**
-     * Change idea's rating, by specifying your new rating and key.
-     * If the user is not the author of the idea and has already voted for it, then
-     * a new rating is calculated based on the passed value.
-     * @param voter voter, who wants to change rating of idea.
-     * @param ideaKey unique idea's id.
-     * @param rating number in the range from 1 to 5.
-     * @throws ServerException if rating not range from 1 to 5 or election already start.
+     * User changes the rating of an idea that was previously rated.
+     * @param requestJsonString gson element with fields: String token (voter's or candidate's unique id),
+     * String ideaKey (unique idea's key), int rating (number for change yourself rating).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If rating not range from 1 to 5: gson element with field: String error: "Оценка должна быть от 1 до 5.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If no idea has the given idea's key: gson element with field: String error: "Идея не найдена.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String changeRating(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -146,7 +162,8 @@ public class IdeaService implements Serializable {
             Voter voter = getVoterDtoResponse.getVoter();
             int rating = request.getRating();
             for (Idea idea : ideas) {
-                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) && !idea.getAuthor().equals(voter)) {
+                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) &&
+                        !idea.getAuthor().equals(voter)) {
                     idea.setSum(idea.getSum() + rating - idea.getVotedVoters().get(voter.getLogin()));
                     idea.getVotedVoters().put(voter.getLogin(), rating);
                     float newRating = (float) idea.getSum() / idea.getVotedVoters().size();
@@ -162,11 +179,14 @@ public class IdeaService implements Serializable {
     }
 
     /**
-     * Remove rating, if idea's author is not voter.
-     * A new rating is calculated based on the voter's previous rating.
-     * @param voter voter, who wants remove his rating.
-     * @param ideaKey unique idea's id.
-     * @throws ServerException if election already start.
+     * User remove yourself rating.
+     * @param requestJsonString gson element with fields: String token (voter's or candidate's unique id),
+     * String ideaKey (unique idea's key).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If no idea has the given idea's key: gson element with field: String error: "Идея не найдена.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String removeRating(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -181,7 +201,8 @@ public class IdeaService implements Serializable {
                     new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
             Voter voter = getVoterDtoResponse.getVoter();
             for (Idea idea : ideas) {
-                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) && !idea.getAuthor().equals(voter)) {
+                if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) &&
+                        !idea.getAuthor().equals(voter)) {
                     idea.setSum(idea.getSum() - idea.getVotedVoters().get(voter.getLogin()));
                     idea.getVotedVoters().remove(voter.getLogin());
                     float newRating = (float) idea.getSum() / idea.getVotedVoters().size();
@@ -199,7 +220,7 @@ public class IdeaService implements Serializable {
 
     /**
      * A new rating is calculated for all ideas evaluated by the voter, based on the voter's previous rating.
-     * @param voter voter who logout.
+     * @param requestJsonString gson element with fields: Voter voter.
      */
     public void removeAllRating(String requestJsonString) {
         RemoveAllRatingDtoRequest request = gson.fromJson(requestJsonString, RemoveAllRatingDtoRequest.class);
@@ -218,8 +239,8 @@ public class IdeaService implements Serializable {
 
     /**
      * Add all idea in ideas list.
-     * @param voter candidate who want confirm candidacy.
-     * @param ideas list of candidate's ideas text.
+     * @param requestJsonString gson element with fields: Candidate candidate (candidate who want confirm candidacy),
+     * List ideas (list of candidate's ideas text).
      * @throws ServerException if election already start.
      */
     public void addAllIdeas(String requestJsonString) throws ServerException {
@@ -235,7 +256,7 @@ public class IdeaService implements Serializable {
 
     /**
      * Get idea from ideas list.
-     * @param ideaKey unique idea's id.
+     * @param requestJsonString gson element with fields: String key (unique idea's id).
      * @return The idea who owns this idea's key.
      * @throws ServerException if no idea has the given idea's key.
      */
@@ -250,15 +271,20 @@ public class IdeaService implements Serializable {
     }
 
     /**
-     * Get all voters ideas from ideas list.
-     * @param logins list of voter logins who popped up their ideas.
-     * @return Ideas list.
+     * User get all some voters ideas.
+     * @param requestJsonString gson element with fields: String token (voter's of candidate's unique id),
+     * List<String> logins (list of logins some voters).
+     * @return If all fields is valid and if the method has not caught any exception: List<Idea> ideas
+     * (list of some voters ideas).
+     * If user logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
      */
     public String getAllVotersIdeas(String requestJsonString) {
         GetAllVotersIdeasDtoRequest request = gson.fromJson(requestJsonString, GetAllVotersIdeasDtoRequest.class);
         try {
             validation.validate(request.getToken(), request.getLogins());
-            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))), IsLoginDtoResponse.class).isLogin()) {
+            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))),
+                    IsLoginDtoResponse.class).isLogin()) {
                 List<Idea> voterIdeas = new ArrayList<>();
                 List<String> logins = request.getLogins();
                 for (Idea idea : ideas) {

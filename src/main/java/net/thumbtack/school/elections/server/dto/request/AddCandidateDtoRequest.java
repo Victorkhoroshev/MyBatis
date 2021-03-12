@@ -16,5 +16,4 @@ public class AddCandidateDtoRequest {
     public String getToken() {
         return token;
     }
-
 }

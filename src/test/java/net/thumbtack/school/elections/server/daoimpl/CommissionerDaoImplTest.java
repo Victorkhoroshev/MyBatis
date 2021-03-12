@@ -1,27 +1,21 @@
 package net.thumbtack.school.elections.server.daoimpl;
 
-import net.thumbtack.school.elections.server.Server;
 import net.thumbtack.school.elections.server.dao.CommissionerDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Commissioner;
-import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
-import net.thumbtack.school.elections.server.service.ServerException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CommissionerDaoImplTest {
     private CommissionerDao dao;
-    private Set<Commissioner> commissionerSet;
 
     @BeforeEach
     void setUp() {
         dao = new CommissionerDaoImpl();
-        commissionerSet = new HashSet<>();
+        Set<Commissioner> commissionerSet = new HashSet<>();
         commissionerSet.add(new Commissioner("victor.net", "25345Qw&&", true));
         commissionerSet.add(new Commissioner("egor.net", "3456eR&21", false));
         commissionerSet.add(new Commissioner("igor.net", "77??SDSw23", false));

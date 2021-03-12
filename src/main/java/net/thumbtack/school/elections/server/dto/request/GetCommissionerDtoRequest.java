@@ -1,4 +1,3 @@
-
 package net.thumbtack.school.elections.server.dto.request;
 
 public class GetCommissionerDtoRequest {

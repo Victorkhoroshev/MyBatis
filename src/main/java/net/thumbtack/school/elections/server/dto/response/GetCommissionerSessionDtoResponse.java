@@ -8,8 +8,4 @@ public class GetCommissionerSessionDtoResponse {
     public GetCommissionerSessionDtoResponse(Session session) {
         this.session = session;
     }
-
-    public Session getSession() {
-        return session;
-    }
 }

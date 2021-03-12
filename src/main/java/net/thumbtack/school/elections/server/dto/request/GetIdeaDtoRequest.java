@@ -10,5 +10,4 @@ public class GetIdeaDtoRequest {
     public String getIdeaKey() {
         return ideaKey;
     }
-
 }

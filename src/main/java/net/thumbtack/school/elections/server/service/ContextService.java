@@ -3,10 +3,8 @@ package net.thumbtack.school.elections.server.service;
 import com.google.gson.Gson;
 import net.thumbtack.school.elections.server.dao.ContextDao;
 import net.thumbtack.school.elections.server.daoimpl.ContextDaoImpl;
-import net.thumbtack.school.elections.server.dto.request.GetElectionResultDtoRequest;
 import net.thumbtack.school.elections.server.dto.request.SetIsElectionStartDtoRequest;
 import net.thumbtack.school.elections.server.dto.request.SetIsElectionStopDtoRequest;
-import net.thumbtack.school.elections.server.dto.response.SetIsElectionStartDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.SetIsElectionStopDtoResponse;
 import net.thumbtack.school.elections.server.model.Context;
 
@@ -44,10 +42,9 @@ public class ContextService {
         return context.getElectionStop();
     }
 
-    public String setIsElectionStart(String requestJsonString) {
+    public void setIsElectionStart(String requestJsonString) {
         SetIsElectionStartDtoRequest request = gson.fromJson(requestJsonString, SetIsElectionStartDtoRequest.class);
         context.setElectionStart(request.isElectionStart());
-        return gson.toJson(new SetIsElectionStartDtoResponse(context.getElectionStart()));
     }
 
     public String setIsElectionStop(String requestJsonString) {

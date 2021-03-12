@@ -17,6 +17,7 @@ public class Context implements Serializable {
     private ElectionService electionService;
     private Set<Commissioner> commissionerSet;
     //REVU: нужен ли нам вообще это класс, если мы перенесем переменные isElectionStart и isElectionStop в ElectionService?
+    // Из-за дто в сервисах появилась перекрестная зависимость между сервисами, для сохранения состояния сервера нужен контекст
     private Boolean isElectionStart;
     private Boolean isElectionStop;
 

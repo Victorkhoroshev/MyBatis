@@ -79,28 +79,32 @@ public class VoterServiceTest {
 
     @Test
     public void getAllTest_Success() {
-        when(voterService.getSessionService().isLogin(anyString())).thenReturn(gson.toJson(new IsLoginDtoResponse(true)));
+        when(voterService.getSessionService().isLogin(anyString()))
+                .thenReturn(gson.toJson(new IsLoginDtoResponse(true)));
         assertEquals(gson.toJson(new GetVotersListDtoResponse(voterService.getDao().getAll())),
                 voterService.getAll(gson.toJson(new GetVoterListDtoRequest(anyString()))));
     }
 
     @Test
     public void getAllTest_Voter_Logout() {
-        when(voterService.getSessionService().isLogin(anyString())).thenReturn(gson.toJson(new IsLoginDtoResponse(false)));
+        when(voterService.getSessionService().isLogin(anyString()))
+                .thenReturn(gson.toJson(new IsLoginDtoResponse(false)));
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage())),
                 voterService.getAll(gson.toJson(new GetVoterListDtoRequest(anyString()))));
     }
 
     @Test
     public void getAllTest_Request_Is_Null() {
-        when(voterService.getSessionService().isLogin(anyString())).thenReturn(gson.toJson(new IsLoginDtoResponse(true)));
+        when(voterService.getSessionService().isLogin(anyString()))
+                .thenReturn(gson.toJson(new IsLoginDtoResponse(true)));
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 voterService.getAll(gson.toJson(null)));
     }
 
     @Test
     public void getAllTest_Request_Some_Field_Is_Null() {
-        when(voterService.getSessionService().isLogin(anyString())).thenReturn(gson.toJson(new IsLoginDtoResponse(true)));
+        when(voterService.getSessionService().isLogin(anyString()))
+                .thenReturn(gson.toJson(new IsLoginDtoResponse(true)));
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 voterService.getAll(gson.toJson(new GetVoterListDtoRequest(null))));
     }
@@ -110,9 +114,11 @@ public class VoterServiceTest {
         when(voterService.getContextService().isElectionStart()).thenReturn(false);
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, "login1111111", "Pas&77123");
-        when(voterService.getSessionService().loginVoter(gson.toJson(new LoginVoterDtoRequest(voter)))).thenReturn(gson.toJson(new LoginVoterDtoResponse("1")));
+        when(voterService.getSessionService().loginVoter(gson.toJson(new LoginVoterDtoRequest(voter))))
+                .thenReturn(gson.toJson(new LoginVoterDtoResponse("1")));
         voterService.getDao().save(voter);
-        assertEquals(gson.toJson(new LoginDtoResponse("1")), voterService.login(gson.toJson(new LoginDtoRequest("login1111111", "Pas&77123"))));
+        assertEquals(gson.toJson(new LoginDtoResponse("1")),
+                voterService.login(gson.toJson(new LoginDtoRequest("login1111111", "Pas&77123"))));
         verify(voterService.getSessionService(), times(1)).loginVoter(anyString());
     }
 
@@ -122,14 +128,16 @@ public class VoterServiceTest {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, "login1222222", "Pas&77123");
         voterService.getDao().save(voter);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())), voterService.login(gson.toJson(new LoginDtoRequest("login1222222", "Pas&77123"))));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())),
+                voterService.login(gson.toJson(new LoginDtoRequest("login1222222", "Pas&77123"))));
         verify(voterService.getSessionService(), times(0)).loginVoter(anyString());
     }
 
     @Test
     public void loginTest_Voter_Not_Register() {
         when(voterService.getContextService().isElectionStart()).thenReturn(false);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_FOUND.getMessage())), voterService.login(gson.toJson(new LoginDtoRequest("login14444444", "Pas&77123"))));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_FOUND.getMessage())),
+                voterService.login(gson.toJson(new LoginDtoRequest("login14444444", "Pas&77123"))));
         verify(voterService.getSessionService(), times(0)).loginVoter(anyString());
     }
 
@@ -139,7 +147,8 @@ public class VoterServiceTest {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, "login1232222", "Pas&77123");
         voterService.getDao().save(voter);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.WRONG_PASSWORD.getMessage())), voterService.login(gson.toJson(new LoginDtoRequest("login1232222", "Pas&7sqwef3"))));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.WRONG_PASSWORD.getMessage())),
+                voterService.login(gson.toJson(new LoginDtoRequest("login1232222", "Pas&7sqwef3"))));
         verify(voterService.getSessionService(), times(0)).loginVoter(anyString());
     }
 
@@ -149,7 +158,8 @@ public class VoterServiceTest {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
         voterService.getDao().save(voter);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.DATA_NOT_FIELD.getMessage())), voterService.login(gson.toJson(new LoginDtoRequest(null , "Pas&7sqwef3"))));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.DATA_NOT_FIELD.getMessage())),
+                voterService.login(gson.toJson(new LoginDtoRequest(null , "Pas&7sqwef3"))));
         verify(voterService.getSessionService(), times(0)).loginVoter(anyString());
     }
 
@@ -159,7 +169,8 @@ public class VoterServiceTest {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
         voterService.getDao().save(voter);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), voterService.login(null));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
+                voterService.login(null));
         verify(voterService.getSessionService(), times(0)).loginVoter(anyString());
     }
 
@@ -167,8 +178,10 @@ public class VoterServiceTest {
     public void logoutTest_Success() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        when(voterService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        when(voterService.getSessionService().logoutVoter(gson.toJson(new LogoutDtoRequest(anyString())))).thenReturn("");
+        when(voterService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(voterService.getSessionService().logoutVoter(gson.toJson(new LogoutDtoRequest(anyString()))))
+                .thenReturn("");
         assertEquals("", voterService.logout(gson.toJson(new LogoutDtoRequest(anyString()))));
         verify(voterService.getSessionService(), times(1)).logoutVoter(anyString());
         verify(voterService.getIdeaService(), times(1)).removeAllRating(anyString());
@@ -178,8 +191,10 @@ public class VoterServiceTest {
     public void logoutTest_Field_Not_Valid() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        when(voterService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), voterService.logout(gson.toJson(new LogoutDtoRequest(null))));
+        when(voterService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
+                voterService.logout(gson.toJson(new LogoutDtoRequest(null))));
         verify(voterService.getSessionService(), times(0)).logoutVoter(anyString());
         verify(voterService.getIdeaService(), times(0)).removeAllRating(anyString());
     }
@@ -188,8 +203,10 @@ public class VoterServiceTest {
     public void logoutTest_Json_Not_Valid() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        when(voterService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString())))).thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())), voterService.logout(null));
+        when(voterService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
+                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
+                voterService.logout(null));
         verify(voterService.getSessionService(), times(0)).logoutVoter(anyString());
         verify(voterService.getIdeaService(), times(0)).removeAllRating(anyString());
     }
@@ -199,7 +216,8 @@ public class VoterServiceTest {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, "login55555555", "Pas&77123");
         voterService.getDao().save(voter);
-        assertEquals(gson.toJson(new GetVoterByLoginDtoResponse(voter)), voterService.get(gson.toJson(new GetVoterByLoginDtoRequest("login55555555"))));
+        assertEquals(gson.toJson(new GetVoterByLoginDtoResponse(voter)),
+                voterService.get(gson.toJson(new GetVoterByLoginDtoRequest("login55555555"))));
     }
 
     @Test

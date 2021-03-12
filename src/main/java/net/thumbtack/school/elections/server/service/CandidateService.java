@@ -24,7 +24,8 @@ public class CandidateService implements Serializable {
     private static final transient String EMPTY_JSON = "";
     private static final transient String NULL_VALUE = "Некорректный запрос.";
 
-    public CandidateService(ContextService contextService, Gson gson, SessionService sessionService, VoterService voterService, IdeaService ideaService) {
+    public CandidateService(ContextService contextService, Gson gson, SessionService sessionService,
+                            VoterService voterService, IdeaService ideaService) {
         this.voterService = voterService;
         this.contextService = contextService;
         this.gson = gson;
@@ -34,11 +35,15 @@ public class CandidateService implements Serializable {
         dao = new CandidateDaoImpl();
         ideas = new HashMap<>();
     }
+
     /**
-     * Add new not confirmed candidate in database, if voter has not own candidate.
-     * @param voter the voter who want to nominate.
-     * @param candidate the voter they want to nominate.
-     * @throws ServerException if election start.
+     * Add new candidate if voter nas not own candidate.
+     * @param requestJsonString gson element with field: String token (candidate's unique id).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If database not contain voter with this login: gson element with field: String error: "Пользователь не найден.".
      */
     public String addCandidate(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -52,7 +57,8 @@ public class CandidateService implements Serializable {
                     new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class).getVoter();
             if (!voter.isHasOwnCandidate() && !dao.contains(request.getCandidateLogin())) {
                 gson.toJson(new GetVoterByLoginDtoRequest(request.getCandidateLogin()));
-                dao.save(new Candidate(gson.fromJson(voterService.get(gson.toJson(new GetVoterByLoginDtoRequest(request.getCandidateLogin()))), GetVoterByLoginDtoResponse.class).getVoter()));
+                dao.save(new Candidate(gson.fromJson(voterService.get(gson.toJson(new GetVoterByLoginDtoRequest(
+                        request.getCandidateLogin()))), GetVoterByLoginDtoResponse.class).getVoter()));
                 voter.setHasOwnCandidate(true);
             }
         } catch (ServerException ex) {
@@ -64,16 +70,20 @@ public class CandidateService implements Serializable {
     }
 
     /**
-     * Voter confirm yourself candidacy and presents his program.
-     * @param voter voter, who wants to become a candidate.
-     * @param candidateIdeas list with text of idea.
-     * @throws ServerException if database not contains voter's login or election start.
+     * Voter confirmation yourself candidacy if has not own candidate and has ideas.
+     * @param requestJsonString gson element with fields: String token (voter's unique id),
+     * List<String> candidateIdeas (list with text of voter's ideas).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
      */
     public String confirmationCandidacy (String requestJsonString) {
         if (contextService.isElectionStart()) {
             return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage()));
         }
-        ConfirmationCandidacyDtoRequest request = gson.fromJson(requestJsonString, ConfirmationCandidacyDtoRequest.class);
+        ConfirmationCandidacyDtoRequest request = gson.fromJson(requestJsonString,
+                ConfirmationCandidacyDtoRequest.class);
         try {
             validation.validate(request.getToken());
             validation.validate(request.getCandidateIdeas());
@@ -102,8 +112,12 @@ public class CandidateService implements Serializable {
 
     /**
      * Candidate withdraw yourself candidacy.
-     * @param voter candidate for withdraw candidacy.
-     * @throws ServerException if database not contains voter's login or election start.
+     * @param requestJsonString gson element with fields: String token (candidate's unique id).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If database not contains this candidate: gson element with field: String error: "Кандидат не найден.".
      */
     public String withdrawCandidacy (String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -129,6 +143,17 @@ public class CandidateService implements Serializable {
         return EMPTY_JSON;
     }
 
+    /**
+     * Logout candidate.
+     * If requestJsonString contain token, owned candidate, checks: is the candidacy confirmed.
+     * Set all User's ideas community(null)
+     * @param requestJsonString gson element with field: String token candidate's unique id.
+     * @return If field is valid and if the method has not caught any exception: empty gson element.
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If voter already logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If voter is candidate and he is not withdraw yourself candidacy: gson element with field: String error:
+     * "Невозможно разлогиниться, для начала, снимите свою кандидатуру с выборов.".
+     */
     public String logout(String requestJsonString) {
         LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
         try {
@@ -144,7 +169,7 @@ public class CandidateService implements Serializable {
 
     /**
      * Candidate verification.
-     * @param voter candidate.
+     * @param requestJsonString json element with field: String token(unique candidate's id).
      * @return If ideas map contains this candidate: true.
      * If ideas map not contains this candidate: false.
      */
@@ -161,10 +186,15 @@ public class CandidateService implements Serializable {
     }
 
     /**
-     * Candidate add new idea into ideas map.
-     * @param voter candidate.
-     * @param idea new candidate's Idea.
-     * @throws ServerException if database not contains this voter or election start.
+     * User add new Idea.
+     * If token belongs to the candidate: candidate add it idea into yourself program
+     * @param requestJsonString gson element with fields: String idea (text of idea),
+     * String token candidate's unique id.
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If no idea has the given voter's login and text: gson element with field: String error: "Идея не найдена.".
      */
     public String addIdea(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -194,10 +224,14 @@ public class CandidateService implements Serializable {
     }
 
     /**
-     * Candidate remove not yourself idea.
-     * @param voter candidate.
-     * @param idea that will later be deleted.
-     * @throws ServerException if database not contains this voter or election start.
+     * Candidate remove not yourself idea
+     * @param requestJsonString gson element with fields: String token (candidate's unique id),
+     * String ideaKey (unique idea's key).
+     * @return If all fields is valid and if the method has not caught any exception: empty gson element.
+     * If voter logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If database not contain candidate: gson element with field: String error: "Кандидат не найден.".
+     * If some field is not valid: gson element with field: String error: "Некорректный запрос.".
+     * If election already start: gson element with field: String error: "Выборы уже проходят, действие невозможно.".
      */
     public String removeIdea(String requestJsonString) {
         if (contextService.isElectionStart()) {
@@ -228,11 +262,21 @@ public class CandidateService implements Serializable {
         }
     }
 
+    /**
+     * User get candidates map.
+     * @param requestJsonString gson element with field: String token (voter's of candidate's unique id).
+     * @return If field is valid and if the method has not caught any exception: gson element with field:
+     * Map<Candidate, List<Idea>> candidateMap(candidates map with
+     * their program).
+     * If user logout: gson element with field: String error: "Сессия пользователя не найдена.".
+     * If field is not valid: gson element with field: "String error: "Некорректный запрос.".
+     */
     public String getCandidateMap(String requestJsonString) {
         GetCandidateMapDtoRequest request = gson.fromJson(requestJsonString, GetCandidateMapDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))), IsLoginDtoResponse.class).isLogin()) {
+            if (gson.fromJson(sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(request.getToken()))),
+                    IsLoginDtoResponse.class).isLogin()) {
                 return gson.toJson(new GetCandidateMapDtoResponse(ideas));
             }
         } catch (ServerException ex) {
@@ -249,7 +293,7 @@ public class CandidateService implements Serializable {
 
     /**
      * Get candidate into candidate's map by login.
-     * @param login unique candidate's field.
+     * @param requestJsonString json element with field: String token(unique candidate's id).
      * @return If ideas map contains candidate with this login: candidate.
      * If login equals null : null.
      * @throws ServerException if in ideas map not contains candidate with this login.

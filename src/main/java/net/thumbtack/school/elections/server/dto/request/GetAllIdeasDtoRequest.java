@@ -10,5 +10,4 @@ public class GetAllIdeasDtoRequest {
     public String getToken() {
         return token;
     }
-
 }

@@ -10,5 +10,4 @@ public class IsCandidateDtoRequest {
     public String getToken() {
         return token;
     }
-
 }
