@@ -1,5 +1,6 @@
 package net.thumbtack.school.elections.server.service;
 
+//REVU: нужно перенести в другой пакет
 public class ServerException extends Exception {
 
     private final ExceptionErrorCode voterExceptionErrorCode;
