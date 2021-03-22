@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class SessionService {
+    //REVU: это должно быть либо частью БД, либо поле session должно быть частью User.
     private final Map<Voter, Session> voterSessions;
     private final Map<Commissioner, Session> commissionerSessions;
     private final Gson gson;

@@ -27,14 +27,18 @@ public class Database {
         return commissionerSet;
     }
 
+    //REVU: возвращать весь Set и перебирать в нем каждый элемент не самое лучшее решение. Сделайте Map<Login, Candidate>
+    // и добавьте метод getCandidateByLogin.
     public Set<Candidate> getCandidateSet() {
         return candidateSet;
     }
 
+    //REVU: тоже самое
     public Set<Voter> getVoterSet() {
         return voterSet;
     }
 
+    //REVU: нужен ли будет нам этот список, если у нас уже будут мапы? Причем мапы сразу будут говорить о наличии дубликатов.
     public List<String> getLogins() {
         return logins;
     }
