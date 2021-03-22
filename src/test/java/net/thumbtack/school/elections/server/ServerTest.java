@@ -297,8 +297,6 @@ public class ServerTest {
         server.stopServer(null);
     }
 
-
-
     private String randomString() {
         Random random = new Random();
         char[] sAlphabet = "АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзиклмнопрстуфхцчшщъыьэюя".toCharArray();

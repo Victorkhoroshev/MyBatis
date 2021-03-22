@@ -2,6 +2,8 @@ package net.thumbtack.school.elections.server.service;
 import com.google.gson.Gson;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
+import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
+import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Idea;
 import net.thumbtack.school.elections.server.model.Voter;

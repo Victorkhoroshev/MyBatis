@@ -1,7 +1,7 @@
 package net.thumbtack.school.elections.server.dao;
 
 import net.thumbtack.school.elections.server.model.Candidate;
-import net.thumbtack.school.elections.server.service.ServerException;
+import net.thumbtack.school.elections.server.exeption.ServerException;
 
 public interface CandidateDao {
 

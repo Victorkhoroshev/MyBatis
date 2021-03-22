@@ -1,5 +1,5 @@
-package net.thumbtack.school.elections.server.service;
-//REVU: нужно перенести в другой пакет
+package net.thumbtack.school.elections.server.exeption;
+
 public enum ExceptionErrorCode {
     ALREADY_EXISTS("Вы уже зарегестрированны."),
     LOGOUT("Сессия пользователя не найдена."),

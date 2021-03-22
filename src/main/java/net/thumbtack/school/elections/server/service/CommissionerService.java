@@ -6,6 +6,8 @@ import net.thumbtack.school.elections.server.daoimpl.CommissionerDaoImpl;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetCommissionerDtoResponse;
+import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
+import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Commissioner;
 
 public class CommissionerService {

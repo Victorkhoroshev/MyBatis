@@ -6,6 +6,8 @@ import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetCandidateDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetElectionResultDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetVoterDtoResponse;
+import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
+import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Voter;
 import java.io.Serializable;

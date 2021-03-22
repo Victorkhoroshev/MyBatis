@@ -3,7 +3,7 @@ package net.thumbtack.school.elections.server.daoimpl;
 import net.thumbtack.school.elections.server.dao.CommissionerDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Commissioner;
-import net.thumbtack.school.elections.server.service.ServerException;
+import net.thumbtack.school.elections.server.exeption.ServerException;
 import java.util.ArrayList;
 import java.util.List;
 

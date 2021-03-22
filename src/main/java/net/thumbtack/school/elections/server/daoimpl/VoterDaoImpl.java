@@ -3,8 +3,8 @@ package net.thumbtack.school.elections.server.daoimpl;
 import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Voter;
-import net.thumbtack.school.elections.server.service.ServerException;
-import net.thumbtack.school.elections.server.service.ExceptionErrorCode;
+import net.thumbtack.school.elections.server.exeption.ServerException;
+import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import java.util.*;
 
 public class VoterDaoImpl implements VoterDao {
