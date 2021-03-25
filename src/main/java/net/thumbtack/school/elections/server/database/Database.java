@@ -6,56 +6,54 @@ import net.thumbtack.school.elections.server.model.Voter;
 import java.util.*;
 
 public class Database {
-    private Set<Candidate> candidateSet;
-    private Set<Voter> voterSet;
-    private List<String> logins;
-    private Set<Commissioner> commissionerSet;
+    private Map<String, Candidate> candidateMap;
+    private Map<String,Voter> voterMap;
+    private Map<String, Commissioner> commissionerMap;
     private static Database instance;
 
     public static Database getInstance() {
         if (instance == null) {
             instance = new Database();
-            instance.setCandidateSet(new HashSet<>());
-            instance.setVoterSet(new HashSet<>());
-            instance.setLogins(new ArrayList<>());
-            instance.setCommissionerSet(new HashSet<>());
+            instance.setCandidateMap(new HashMap<>());
+            instance.setVoterMap(new HashMap<>());
+            instance.setCommissionerMap(new HashMap<>());
         }
         return instance;
     }
 
-    public Set<Commissioner> getCommissionerSet() {
-        return commissionerSet;
+    public Map<String, Commissioner> getCommissionerMap() {
+        return commissionerMap;
     }
 
-    //REVU: возвращать весь Set и перебирать в нем каждый элемент не самое лучшее решение. Сделайте Map<Login, Candidate>
-    // и добавьте метод getCandidateByLogin.
-    public Set<Candidate> getCandidateSet() {
-        return candidateSet;
+    public Commissioner getCommissionerByLogin(String login) {
+        return getCommissionerMap().get(login);
     }
 
-    //REVU: тоже самое
-    public Set<Voter> getVoterSet() {
-        return voterSet;
+    public Map<String, Candidate> getCandidateMap() {
+        return candidateMap;
     }
 
-    //REVU: нужен ли будет нам этот список, если у нас уже будут мапы? Причем мапы сразу будут говорить о наличии дубликатов.
-    public List<String> getLogins() {
-        return logins;
+    public Candidate getCandidateByLogin(String login) {
+        return getCandidateMap().get(login);
     }
 
-    public void setCommissionerSet(Set<Commissioner> commissionerSet) {
-        this.commissionerSet = commissionerSet;
+    public Map<String, Voter> getVoterMap() {
+        return voterMap;
     }
 
-    public void setCandidateSet(Set<Candidate> candidateSet) {
-        this.candidateSet = candidateSet;
+    public Voter getVoterByLogin(String login) {
+        return getVoterMap().get(login);
     }
 
-    public void setVoterSet(Set<Voter> voterSet) {
-        this.voterSet = voterSet;
+    public void setCommissionerMap(Map<String, Commissioner> commissionerMap) {
+        this.commissionerMap = commissionerMap;
     }
 
-    public void setLogins(List<String> logins) {
-        this.logins = logins;
+    public void setCandidateMap(Map<String, Candidate> candidateMap) {
+        this.candidateMap = candidateMap;
+    }
+
+    public void setVoterMap(Map<String, Voter> voterMap) {
+        this.voterMap = voterMap;
     }
 }

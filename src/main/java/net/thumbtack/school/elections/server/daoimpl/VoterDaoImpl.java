@@ -21,14 +21,7 @@ public class VoterDaoImpl implements VoterDao {
      */
     @Override
     public Voter get(String login) {
-        Voter voter;
-        for (Voter value : database.getVoterSet()) {
-            voter = value;
-            if (voter.getLogin().equals(login)) {
-                return voter;
-            }
-        }
-        return null;
+        return database.getVoterByLogin(login);
     }
 
     /**
@@ -37,7 +30,7 @@ public class VoterDaoImpl implements VoterDao {
      */
     @Override
     public Set<Voter> getAll() {
-        return database.getVoterSet();
+        return new HashSet<>(database.getVoterMap().values());
     }
 
     /**
@@ -47,16 +40,13 @@ public class VoterDaoImpl implements VoterDao {
      */
     @Override
     public Voter save(Voter voter) throws ServerException {
-        if (database.getVoterSet().contains(voter)){
+        if (database.getVoterMap().containsValue(voter)) {
             throw new ServerException(ExceptionErrorCode.ALREADY_EXISTS);
         }
-        for (String s : database.getLogins()) {
-            if (voter.getLogin().equals(s)) {
-                throw new ServerException(ExceptionErrorCode.LOGIN_ALREADY_EXISTS);
-            }
+        if (database.getVoterMap().containsKey(voter.getLogin()) ||
+                database.getCommissionerMap().containsKey(voter.getLogin())) {
+            throw new ServerException(ExceptionErrorCode.LOGIN_ALREADY_EXISTS);
         }
-        database.getVoterSet().add(voter);
-        database.getLogins().add(voter.getLogin());
-        return voter;
+        return database.getVoterMap().put(voter.getLogin(), voter);
     }
 }

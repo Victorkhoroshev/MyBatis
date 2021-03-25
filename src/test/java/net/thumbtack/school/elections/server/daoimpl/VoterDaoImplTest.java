@@ -6,6 +6,8 @@ import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -18,7 +20,7 @@ public class VoterDaoImplTest {
     @BeforeEach
     void setUp() {
         dao = new VoterDaoImpl();
-        Database.getInstance().setVoterSet(new HashSet<>());
+        Database.getInstance().setVoterMap(new HashMap<>());
     }
 
     @Test

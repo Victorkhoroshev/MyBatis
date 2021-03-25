@@ -14,14 +14,7 @@ public class CandidateDaoImpl implements CandidateDao {
      */
     @Override
     public Candidate get(String login) {
-        Candidate candidate;
-        for (Candidate value : database.getCandidateSet()) {
-            candidate = value;
-            if (candidate.getVoter().getLogin().equals(login)) {
-                return candidate;
-            }
-        }
-        return null;
+        return database.getCandidateByLogin(login);
     }
 
     /**
@@ -30,8 +23,10 @@ public class CandidateDaoImpl implements CandidateDao {
      */
     @Override
     public Candidate save(Candidate candidate) {
-        database.getCandidateSet().add(candidate);
-        return get(candidate.getVoter().getLogin());
+        if (!database.getCandidateMap().containsValue(candidate)) {
+            return database.getCandidateMap().put(candidate.getLogin(), candidate);
+        }
+        return null;
     }
 
     /**
@@ -42,12 +37,7 @@ public class CandidateDaoImpl implements CandidateDao {
      */
     @Override
     public boolean contains(String login) {
-        for (Candidate candidate : database.getCandidateSet()) {
-            if (candidate.getVoter().getLogin().equals(login)) {
-                return true;
-            }
-        }
-        return false;
+        return database.getCandidateMap().containsKey(login);
     }
 
     /**
@@ -56,6 +46,8 @@ public class CandidateDaoImpl implements CandidateDao {
      */
     @Override
     public void delete(Candidate candidate) {
-        database.getCandidateSet().remove(candidate);
+        if (database.getCandidateMap().containsValue(candidate)) {
+            database.getCandidateMap().remove(candidate.getLogin());
+        }
     }
 }

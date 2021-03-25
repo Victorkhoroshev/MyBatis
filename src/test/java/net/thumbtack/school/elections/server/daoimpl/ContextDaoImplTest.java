@@ -20,9 +20,8 @@ public class ContextDaoImplTest {
     public void syncTest() throws IOException, ClassNotFoundException {
         server.startServer(null);
         assertAll(
-                () -> assertEquals(3, database.getLogins().size()),
-                () -> assertEquals(0, database.getVoterSet().size()),
-                () -> assertEquals(0, database.getCandidateSet().size())
+                () -> assertEquals(0, database.getVoterMap().size()),
+                () -> assertEquals(0, database.getCandidateMap().size())
         );
         Context context = new Context();
         Voter voter1 = new Voter("Виктор", "Хорошев",
@@ -31,30 +30,28 @@ public class ContextDaoImplTest {
                 "Пригородная", 21, 188, "victooroshev.net"," 1111");
         Candidate candidate1 = new Candidate(voter1);
         Candidate candidate2 = new Candidate(voter2);
-        List<String> logins = new ArrayList<>(Arrays.asList("victor@khoroshev.net", "victooroshev.net"));
-        Set<Voter> voterSet = new HashSet<>(Arrays.asList(voter1, voter2));
-        Set<Candidate> candidateSet = new HashSet<>(Arrays.asList(candidate1, candidate2));
-        database.setLogins(logins);
-        database.setVoterSet(voterSet);
-        database.setCandidateSet(candidateSet);
+        Map<String, Voter> voterMap = new HashMap<>();
+        Map<String, Candidate> candidateMap = new HashMap<>();
+        voterMap.put(voter1.getLogin(), voter1);
+        voterMap.put(voter2.getLogin(), voter2);
+        candidateMap.put(candidate1.getLogin(), candidate1);
+        candidateMap.put(candidate2.getLogin(), candidate2);
+        database.setVoterMap(voterMap);
+        database.setCandidateMap(candidateMap);
         dao.sync(context);
         assertAll(
-                () -> assertEquals(voterSet, database.getVoterSet()),
-                () -> assertEquals(logins, database.getLogins()),
-                () -> assertEquals(candidateSet, database.getCandidateSet())
+                () -> assertEquals(voterMap, database.getVoterMap()),
+                () -> assertEquals(candidateMap, database.getCandidateMap())
         );
 
-        List<String> logins1 = new ArrayList<>();
-        Set<Voter> voterSet1 = new HashSet<>();
-        Set<Candidate> candidateSet1 = new HashSet<>();
-        context.setLogins(logins1);
-        context.setVoterSet(voterSet1);
-        context.setCandidateSet(candidateSet1);
+        Map<String, Voter> voterMap1 = new HashMap<>();
+        Map<String, Candidate> candidateMap1 = new HashMap<>();
+        context.setVoterMap(voterMap1);
+        context.setCandidateMap(candidateMap1);
         ContextDao daoWithContext = new ContextDaoImpl(context);
         assertAll(
-                () -> assertEquals(logins1, database.getLogins()),
-                () -> assertEquals(voterSet1, database.getVoterSet()),
-                () -> assertEquals(candidateSet1, database.getCandidateSet())
+                () -> assertEquals(voterMap1, database.getVoterMap()),
+                () -> assertEquals(candidateMap1, database.getCandidateMap())
         );
         server.stopServer(null);
     }

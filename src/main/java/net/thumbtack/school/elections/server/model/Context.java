@@ -4,18 +4,16 @@ import net.thumbtack.school.elections.server.service.CandidateService;
 import net.thumbtack.school.elections.server.service.ElectionService;
 import net.thumbtack.school.elections.server.service.IdeaService;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class Context implements Serializable {
     private static Context context;
-    private Set<Candidate> candidateSet;
-    private Set<Voter> voterSet;
-    private List<String> logins;
+    private Map<String, Candidate> candidateMap;
+    private Map<String, Voter> voterMap;
     private CandidateService candidateService;
     private IdeaService ideaService;
     private ElectionService electionService;
-    private Set<Commissioner> commissionerSet;
+    private Map<String, Commissioner> commissionerMap;
     private Boolean isElectionStart;
     private Boolean isElectionStop;
 
@@ -42,36 +40,28 @@ public class Context implements Serializable {
         isElectionStart = electionStart;
     }
 
-    public Set<Commissioner> getCommissionerSet() {
-        return commissionerSet;
+    public Map<String, Candidate> getCandidateMap() {
+        return candidateMap;
     }
 
-    public void setCommissionerSet(Set<Commissioner> commissionerSet) {
-        this.commissionerSet = commissionerSet;
+    public void setCandidateMap(Map<String, Candidate> candidateMap) {
+        this.candidateMap = candidateMap;
     }
 
-    public Set<Candidate> getCandidateSet() {
-        return candidateSet;
+    public Map<String, Voter> getVoterMap() {
+        return voterMap;
     }
 
-    public void setCandidateSet(Set<Candidate> candidateSet) {
-        this.candidateSet = candidateSet;
+    public void setVoterMap(Map<String, Voter> voterMap) {
+        this.voterMap = voterMap;
     }
 
-    public Set<Voter> getVoterSet() {
-        return voterSet;
+    public Map<String, Commissioner> getCommissionerMap() {
+        return commissionerMap;
     }
 
-    public void setVoterSet(Set<Voter> voterSet) {
-        this.voterSet = voterSet;
-    }
-
-    public List<String> getLogins() {
-        return logins;
-    }
-
-    public void setLogins(List<String> logins) {
-        this.logins = logins;
+    public void setCommissionerMap(Map<String, Commissioner> commissionerMap) {
+        this.commissionerMap = commissionerMap;
     }
 
     public CandidateService getCandidateService() {

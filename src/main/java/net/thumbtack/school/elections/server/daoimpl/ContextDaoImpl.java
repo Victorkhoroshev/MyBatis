@@ -4,10 +4,7 @@ import net.thumbtack.school.elections.server.dao.ContextDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Commissioner;
 import net.thumbtack.school.elections.server.model.Context;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ContextDaoImpl implements ContextDao {
     private final Database database = Database.getInstance();
@@ -16,18 +13,13 @@ public class ContextDaoImpl implements ContextDao {
      * Create new candidate's set, new voter's set, new login's set and already filled with three commissioner: commissioner's set.
      */
     public ContextDaoImpl() {
-        Set<Commissioner> commissionerSet = new HashSet<>();
-        List<String> logins = new ArrayList<>();
-        commissionerSet.add(new Commissioner("victor.net", "25345Qw&&", true));
-        commissionerSet.add(new Commissioner("egor.net", "3456eR&21", false));
-        commissionerSet.add(new Commissioner("igor.net", "77??SDSw23", false));
-        logins.add("victor@khoroshev.net");
-        logins.add("egor@khoroshev.net");
-        logins.add("igor@khoroshev.net");
-        database.setCandidateSet(new HashSet<>());
-        database.setVoterSet(new HashSet<>());
-        database.setLogins(logins);
-        database.setCommissionerSet(commissionerSet);
+        Map<String, Commissioner> commissionerMap = new HashMap<>();
+        commissionerMap.put("victor.net", new Commissioner("victor.net", "25345Qw&&", true));
+        commissionerMap.put("egor.net", new Commissioner("egor.net", "3456eR&21", false));
+        commissionerMap.put("igor.net", new Commissioner("igor.net", "77??SDSw23", false));
+        database.setCandidateMap(new HashMap<>());
+        database.setVoterMap(new HashMap<>());
+        database.setCommissionerMap(commissionerMap);
     }
 
     /**
@@ -35,10 +27,9 @@ public class ContextDaoImpl implements ContextDao {
      * @param context previous state of program.
      */
     public ContextDaoImpl(Context context) {
-        database.setCandidateSet(context.getCandidateSet());
-        database.setVoterSet(context.getVoterSet());
-        database.setLogins(context.getLogins());
-        database.setCommissionerSet(context.getCommissionerSet());
+        database.setCandidateMap(context.getCandidateMap());
+        database.setVoterMap(context.getVoterMap());
+        database.setCommissionerMap(context.getCommissionerMap());
     }
 
     /**
@@ -47,9 +38,8 @@ public class ContextDaoImpl implements ContextDao {
      */
     @Override
     public void sync(Context context) {
-        context.setCandidateSet(database.getCandidateSet());
-        context.setVoterSet(database.getVoterSet());
-        context.setLogins(database.getLogins());
-        context.setCommissionerSet(database.getCommissionerSet());
+        context.setCandidateMap(database.getCandidateMap());
+        context.setVoterMap(database.getVoterMap());
+        context.setCommissionerMap(database.getCommissionerMap());
     }
 }

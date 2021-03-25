@@ -84,10 +84,10 @@ public class ServerTest {
         server1.startServer(null);
         server1.getContextService().getContext().setElectionStart(true);
         server1.stopServer(
-                "C:\\Thumbtack\\thumbtack_online_school_2020_2__viktor_khoroshev\\saveDataFile");
+                "C:\\Users\\victor\\IdeaProjects\\thumbtack_online_school_2020_2__viktor_khoroshev\\saveDataFile");
         Server server2 = new Server();
         server2.startServer(
-                "C:\\Thumbtack\\thumbtack_online_school_2020_2__viktor_khoroshev\\saveDataFile");
+                "C:\\Users\\victor\\IdeaProjects\\thumbtack_online_school_2020_2__viktor_khoroshev\\saveDataFile");
         assertTrue(server2.getContextService().isElectionStart());
         server2.stopServer(null);
     }

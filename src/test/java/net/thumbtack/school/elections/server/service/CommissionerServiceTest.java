@@ -14,9 +14,8 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
@@ -38,13 +37,13 @@ public class CommissionerServiceTest {
     public CommissionerServiceTest() {
         MockitoAnnotations.initMocks(this);
         gson = new Gson();
-        Set<Commissioner> commissionerSet = new HashSet<>();
-        commissionerSet.add(new Commissioner("victor.net", "25345Qw&&", true));
-        commissionerSet.add(new Commissioner("egor.net", "25345Qw&&", false));
-        commissionerSet.add(new Commissioner("igor.net", "25345Qw&&", false));
+        Map<String, Commissioner> commissionerMap = new HashMap<>();
+        commissionerMap.put("victor.net", new Commissioner("victor.net", "25345Qw&&", true));
+        commissionerMap.put("egor.net", new Commissioner("egor.net", "25345Qw&&", false));
+        commissionerMap.put("igor.net", new Commissioner("igor.net", "25345Qw&&", false));
         commissionerService = new CommissionerService(sessionService, electionService, contextService, gson,
                 candidateService);
-        Database.getInstance().setCommissionerSet(commissionerSet);
+        Database.getInstance().setCommissionerMap(commissionerMap);
     }
 
     @Test

@@ -26,8 +26,8 @@ public class CandidateDaoImplTest {
         dao.save(candidate);
         dao.save(candidate1);
         assertAll(
-                () ->assertEquals(1, database.getCandidateSet().size()),
-                () ->assertTrue(database.getCandidateSet().contains(candidate))
+                () ->assertEquals(1, database.getCandidateMap().size()),
+                () ->assertTrue(database.getCandidateMap().containsValue(candidate))
         );
         server.stopServer(null);
     }
@@ -63,11 +63,11 @@ public class CandidateDaoImplTest {
                 "Пригородная", 21, 188, "victor@khoroshev.net"," 1111"));
         dao.save(candidate);
         dao.delete(candidate1);
-        assertEquals(1, database.getCandidateSet().size());
-        assertTrue(database.getCandidateSet().contains(candidate));
+        assertEquals(1, database.getCandidateMap().size());
+        assertTrue(database.getCandidateMap().containsValue(candidate));
         dao.delete(candidate);
-        assertFalse(database.getCandidateSet().contains(candidate));
-        assertEquals(0, database.getCandidateSet().size());
+        assertFalse(database.getCandidateMap().containsValue(candidate));
+        assertEquals(0, database.getCandidateMap().size());
         server.stopServer(null);
     }
 }

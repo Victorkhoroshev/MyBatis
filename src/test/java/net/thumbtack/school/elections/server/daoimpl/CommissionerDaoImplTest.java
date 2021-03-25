@@ -15,11 +15,11 @@ public class CommissionerDaoImplTest {
     @BeforeEach
     void setUp() {
         dao = new CommissionerDaoImpl();
-        Set<Commissioner> commissionerSet = new HashSet<>();
-        commissionerSet.add(new Commissioner("victor.net", "25345Qw&&", true));
-        commissionerSet.add(new Commissioner("egor.net", "3456eR&21", false));
-        commissionerSet.add(new Commissioner("igor.net", "77??SDSw23", false));
-        Database.getInstance().setCommissionerSet(commissionerSet);
+        Map<String, Commissioner> commissionerMap = new HashMap<>();
+        commissionerMap.put("victor.net", new Commissioner("victor.net", "25345Qw&&", true));
+        commissionerMap.put("egor.net", new Commissioner("egor.net", "3456eR&21", false));
+        commissionerMap.put("igor.net", new Commissioner("igor.net", "77??SDSw23", false));
+        Database.getInstance().setCommissionerMap(commissionerMap);
     }
 
     @Test
@@ -35,11 +35,12 @@ public class CommissionerDaoImplTest {
 
     @Test
     public void getLoginsTest() {
-        List<String> list = new ArrayList<>();
-        list.add("igor.net");
-        list.add("victor.net");
-        list.add("egor.net");
-        assertEquals(list, dao.getLogins());
+        assertAll(
+                () -> assertTrue(dao.getLogins().contains("victor.net")),
+                () -> assertTrue(dao.getLogins().contains("egor.net")),
+                () -> assertTrue(dao.getLogins().contains("igor.net")),
+                () -> assertEquals(3, dao.getLogins().size())
+        );
     }
 
     @Test
