@@ -5,7 +5,6 @@ import net.thumbtack.school.elections.server.dao.CommissionerDao;
 import net.thumbtack.school.elections.server.daoimpl.CommissionerDaoImpl;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
-import net.thumbtack.school.elections.server.dto.response.GetCommissionerDtoResponse;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Commissioner;
@@ -22,14 +21,14 @@ public class CommissionerService {
     private static final String NULL_VALUE = "Некорректный запрос.";
 
     public CommissionerService(SessionService sessionService, ElectionService electionService,
-                               ContextService contextService, Gson gson, CandidateService candidateService) {
+                               ContextService contextService, CandidateService candidateService) {
         this.sessionService = sessionService;
         this.electionService = electionService;
         this.contextService = contextService;
-        this.gson = gson;
         this.candidateService = candidateService;
         dao = new CommissionerDaoImpl();
         validation = new Validation();
+        gson = new Gson();
     }
 
     /**
@@ -89,7 +88,8 @@ public class CommissionerService {
         LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            return sessionService.logoutCommissioner(requestJsonString);
+            return sessionService.logoutCommissioner(gson.toJson(
+                    new LogoutCommissionerDtoRequest(dao.getCommissionerByToken(request.getToken()))));
         } catch (ServerException ex) {
             return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
         } catch (NullPointerException ignored) {
@@ -108,9 +108,7 @@ public class CommissionerService {
         StartElectionDtoRequest request = gson.fromJson(requestJsonString, StartElectionDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(
-                    gson.toJson(new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
-            if (!getCommissionerDtoResponse.getCommissioner().isChairman()) {
+            if (!dao.getCommissionerByToken(request.getToken()).isChairman()) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage()));
             }
             return  electionService.startElection(gson.toJson(
@@ -134,9 +132,7 @@ public class CommissionerService {
         GetElectionResultDtoRequest request = gson.fromJson(requestJsonString, GetElectionResultDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetCommissionerDtoResponse getCommissionerDtoResponse = gson.fromJson(sessionService.getCommissioner(
-                    gson.toJson(new GetCommissionerDtoRequest(request.getToken()))), GetCommissionerDtoResponse.class);
-            if (!getCommissionerDtoResponse.getCommissioner().isChairman()) {
+            if (!dao.getCommissionerByToken(request.getToken()).isChairman()) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage()));
             }
             return electionService.getElectionResult();

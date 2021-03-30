@@ -2,6 +2,7 @@ package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
 import net.thumbtack.school.elections.server.dao.CandidateDao;
+import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.daoimpl.CandidateDaoImpl;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
@@ -14,7 +15,8 @@ import java.io.Serializable;
 import java.util.*;
 
 public class CandidateService implements Serializable {
-    private final transient CandidateDao dao;
+    private final transient CandidateDao candidateDao;
+    private final transient VoterDao voterDao;
     private final transient Validation validation;
     private final transient VoterService voterService;
     private final Map<Candidate, List<Idea>> ideas;
@@ -26,16 +28,17 @@ public class CandidateService implements Serializable {
     private static final transient String EMPTY_JSON = "";
     private static final transient String NULL_VALUE = "Некорректный запрос.";
 
-    public CandidateService(ContextService contextService, Gson gson, SessionService sessionService,
+    public CandidateService(ContextService contextService, SessionService sessionService, VoterDao voterDao,
                             VoterService voterService, IdeaService ideaService) {
+        this.sessionService = sessionService;
         this.voterService = voterService;
         this.contextService = contextService;
-        this.gson = gson;
-        this.sessionService = sessionService;
         this.ideaService = ideaService;
+        this.voterDao = voterDao;
         validation = new Validation();
-        dao = new CandidateDaoImpl();
+        candidateDao = new CandidateDaoImpl();
         ideas = new HashMap<>();
+        gson = new Gson();
     }
 
     /**
@@ -55,11 +58,10 @@ public class CandidateService implements Serializable {
         try {
             validation.validate(request.getToken());
             validation.validate(request.getCandidateLogin());
-            Voter voter = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class).getVoter();
-            if (!voter.isHasOwnCandidate() && !dao.contains(request.getCandidateLogin())) {
+            Voter voter = voterDao.getVoterByToken(request.getToken());
+            if (!voter.isHasOwnCandidate() && !candidateDao.contains(request.getCandidateLogin())) {
                 gson.toJson(new GetVoterByLoginDtoRequest(request.getCandidateLogin()));
-                dao.save(new Candidate(gson.fromJson(voterService.get(gson.toJson(new GetVoterByLoginDtoRequest(
+                candidateDao.save(new Candidate(gson.fromJson(voterService.get(gson.toJson(new GetVoterByLoginDtoRequest(
                         request.getCandidateLogin()))), GetVoterByLoginDtoResponse.class).getVoter()));
                 voter.setHasOwnCandidate(true);
             }
@@ -89,18 +91,16 @@ public class CandidateService implements Serializable {
         try {
             validation.validate(request.getToken());
             validation.validate(request.getCandidateIdeas());
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = voterDao.getVoterByToken(request.getToken());
             ideaService.addAllIdeas(gson.toJson(new AddAllIdeasDtoRequest(voter, request.getCandidateIdeas())));
             GetAllVotersIdeasDtoResponse response = gson.fromJson(ideaService.getAllVotersIdeas(gson.toJson(
                     new GetAllIdeasDtoRequest(request.getToken()))), GetAllVotersIdeasDtoResponse.class);
-            if (dao.contains(voter.getLogin())) {
-                ideas.put(dao.get(voter.getLogin()), response.getIdeas());
+            if (candidateDao.contains(voter.getLogin())) {
+                ideas.put(candidateDao.get(voter.getLogin()), response.getIdeas());
                 voter.setHasOwnCandidate(true);
             } else if (!voter.isHasOwnCandidate()) {
                 Candidate candidate = new Candidate(voter);
-                dao.save(candidate);
+                candidateDao.save(candidate);
                 ideas.put(candidate, response.getIdeas());
                 voter.setHasOwnCandidate(true);
             }
@@ -128,15 +128,13 @@ public class CandidateService implements Serializable {
         WithdrawCandidacyDtoRequest request = gson.fromJson(requestJsonString, WithdrawCandidacyDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
-            Candidate candidate = dao.get(voter.getLogin());
+            Voter voter = voterDao.getVoterByToken(request.getToken());
+            Candidate candidate = candidateDao.get(voter.getLogin());
             if (candidate == null) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.CANDIDATE_NOT_FOUND.getMessage()));
             }
             ideas.remove(candidate);
-            dao.delete(candidate);
+            candidateDao.delete(candidate);
         } catch (ServerException ex) {
             return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
         } catch (NullPointerException ignored) {
@@ -178,9 +176,7 @@ public class CandidateService implements Serializable {
     public boolean isCandidate(String requestJsonString) {
         IsCandidateDtoRequest request = gson.fromJson(requestJsonString, IsCandidateDtoRequest.class);
         try {
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = voterDao.getVoterByToken(request.getToken());
             return ideas.containsKey(new Candidate(voter));
         } catch (ServerException ex) {
             return false;
@@ -206,10 +202,8 @@ public class CandidateService implements Serializable {
         try {
             validation.validate(request.getIdea());
             validation.validate(request.getToken());
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
-            Candidate candidate = dao.get(voter.getLogin());
+            Voter voter = voterDao.getVoterByToken(request.getToken());
+            Candidate candidate = candidateDao.get(voter.getLogin());
             if (candidate == null) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.CANDIDATE_NOT_FOUND.getMessage()));
             }
@@ -243,13 +237,11 @@ public class CandidateService implements Serializable {
         try {
             validation.validate(request.getIdeaKey());
             validation.validate(request.getToken());
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = voterDao.getVoterByToken(request.getToken());
             GetIdeaDtoResponse getIdeaDtoResponse = gson.fromJson(ideaService.getIdea(gson.toJson(
                     new GetIdeaDtoRequest(request.getIdeaKey()))), GetIdeaDtoResponse.class);
             Idea idea = getIdeaDtoResponse.getIdea();
-            Candidate candidate = dao.get(voter.getLogin());
+            Candidate candidate = candidateDao.get(voter.getLogin());
             if (candidate == null) {
                 return gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.CANDIDATE_NOT_FOUND.getMessage()));
             }
@@ -333,7 +325,11 @@ public class CandidateService implements Serializable {
         return voterService;
     }
 
-    public CandidateDao getDao() {
-        return dao;
+    public CandidateDao getCandidateDao() {
+        return candidateDao;
+    }
+
+    public VoterDao getVoterDao() {
+        return voterDao;
     }
 }

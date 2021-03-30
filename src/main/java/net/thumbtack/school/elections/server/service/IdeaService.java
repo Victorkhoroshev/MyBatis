@@ -1,6 +1,7 @@
 package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
@@ -14,16 +15,18 @@ public class IdeaService implements Serializable {
     private final List<Idea> ideas;
     private final transient ContextService contextService;
     private final transient SessionService sessionService;
+    private final transient VoterDao dao;
     private final transient Gson gson;
     private final transient Validation validation;
 
     private static final transient String EMPTY_JSON = "";
     private static final transient String NULL_VALUE = "Некорректный запрос.";
 
-    public IdeaService(ContextService contextService, Gson gson, SessionService sessionService) {
+    public IdeaService(ContextService contextService, SessionService sessionService, VoterDao dao) {
         this.contextService = contextService;
-        this.gson = gson;
         this.sessionService = sessionService;
+        this.dao = dao;
+        gson = new Gson();
         ideas = new ArrayList<>();
         validation = new Validation();
     }
@@ -77,9 +80,7 @@ public class IdeaService implements Serializable {
             validation.validate(request.getIdea());
             validation.validate(request.getToken());
             String key = UUID.randomUUID().toString();
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = dao.getVoterByToken(request.getToken());
             ideas.add(new Idea(key, voter, request.getIdea()));
             return gson.toJson(new AddIdeaDtoResponse(key));
         } catch (ServerException ex) {
@@ -120,9 +121,7 @@ public class IdeaService implements Serializable {
         try {
             validation.validate(request.getIdeaKey(), request.getToken(), request.getRating());
             String ideaKey = request.getIdeaKey();
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = dao.getVoterByToken(request.getToken());
             int rating = request.getRating();
             for (Idea idea : ideas) {
                 if (idea.getKey().equals(ideaKey) && !idea.getVotedVoters().containsKey(voter.getLogin())) {
@@ -159,9 +158,7 @@ public class IdeaService implements Serializable {
         try {
             validation.validate(request.getIdeaKey(), request.getToken(), request.getRating());
             String ideaKey = request.getIdeaKey();
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = dao.getVoterByToken(request.getToken());
             int rating = request.getRating();
             for (Idea idea : ideas) {
                 if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) &&
@@ -199,9 +196,7 @@ public class IdeaService implements Serializable {
             validation.validate(request.getIdeaKey());
             validation.validate(request.getToken());
             String ideaKey = request.getIdeaKey();
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = dao.getVoterByToken(request.getToken());
             for (Idea idea : ideas) {
                 if (idea.getKey().equals(ideaKey) && idea.getVotedVoters().containsKey(voter.getLogin()) &&
                         !idea.getAuthor().equals(voter)) {
@@ -309,6 +304,10 @@ public class IdeaService implements Serializable {
 
     public List<Idea> getIdeas() {
         return ideas;
+    }
+
+    public VoterDao getDao() {
+        return dao;
     }
 
     public ContextService getContextService() {

@@ -1,4 +1,6 @@
 package net.thumbtack.school.elections.server.daoimpl;
+
+import net.thumbtack.school.elections.server.dao.ContextDao;
 import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.database.Database;
 import net.thumbtack.school.elections.server.model.Voter;
@@ -6,7 +8,6 @@ import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -25,6 +26,7 @@ public class VoterDaoImplTest {
 
     @Test
     public void saveTest() throws ServerException {
+        ContextDao contextDao = new ContextDaoImpl();
         Voter voter = new Voter("Виктор", "Хорошеев",
                 "Пригородная", 21, 188, "victoroshev.net"," 1111");
         Voter voter1 = new Voter("Виктор", "Хорошеев",
@@ -33,6 +35,10 @@ public class VoterDaoImplTest {
                 "Пригородная", 21, 188, "victor@khoroshev.net"," 1111");
         Voter voter3 = new Voter("Андрей", "Хорышев",
                 "Пригородная", 21, 188, "victooroshev.net"," 1111");
+        Voter voter4 = new Voter("Андй", "Хошев",
+                "Пригородная", 21, 188, "victor.net"," 1111");
+        Voter voter5 = new Voter("ктор", "Хорошеев",
+                "Пригородная", 21, 188, "victoroshev.net"," 1111");
         dao.save(voter);
         try {
             dao.save(voter1);
@@ -41,10 +47,24 @@ public class VoterDaoImplTest {
             assertEquals(ExceptionErrorCode.ALREADY_EXISTS, ex.getErrorCode());
         }
         dao.save(voter3);
+        try {
+            dao.save(voter4);
+            fail();
+        } catch (ServerException ex) {
+            assertEquals(ExceptionErrorCode.LOGIN_ALREADY_EXISTS, ex.getErrorCode());
+        }
+        try {
+            dao.save(voter5);
+            fail();
+        } catch (ServerException ex) {
+            assertEquals(ExceptionErrorCode.LOGIN_ALREADY_EXISTS, ex.getErrorCode());
+        }
         assertAll(
                 () -> assertTrue(dao.getAll().contains(voter)),
                 () -> assertTrue(dao.getAll().contains(voter3)),
                 () -> assertFalse(dao.getAll().contains(voter2)),
+                () -> assertFalse(dao.getAll().contains(voter4)),
+                () -> assertFalse(dao.getAll().contains(voter5)),
                 () -> assertEquals(2, dao.getAll().size())
         );
     }

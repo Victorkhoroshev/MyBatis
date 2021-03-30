@@ -2,7 +2,6 @@ package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
 import net.thumbtack.school.elections.server.dao.VoterDao;
-import net.thumbtack.school.elections.server.daoimpl.VoterDaoImpl;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
@@ -19,14 +18,14 @@ public class VoterService {
 
     private static final String NULL_VALUE = "Некорректный запрос.";
 
-    public VoterService(SessionService sessionService, ContextService contextService,
-                        Gson gson, IdeaService ideaService) {
-        dao = new VoterDaoImpl();
-        validation = new Validation();
+    public VoterService(VoterDao dao, SessionService sessionService,
+                        ContextService contextService, IdeaService ideaService) {
+        this.dao = dao;
         this.sessionService = sessionService;
         this.contextService = contextService;
-        this.gson = gson;
         this.ideaService = ideaService;
+        validation = new Validation();
+        gson = new Gson();
     }
 
     /**
@@ -133,11 +132,9 @@ public class VoterService {
         LogoutDtoRequest request = gson.fromJson(requestJsonString, LogoutDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = dao.getVoterByToken(request.getToken());
             ideaService.removeAllRating(gson.toJson(new RemoveAllRatingDtoRequest(voter)));
-            return sessionService.logoutVoter(requestJsonString);
+            return sessionService.logoutVoter(gson.toJson(new LogoutVoterDtoRequest(voter)));
         } catch (ServerException ex) {
             return gson.toJson(new ErrorDtoResponse(ex.getLocalizedMessage()));
         } catch (NullPointerException ignored) {

@@ -7,14 +7,15 @@ import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Commissioner;
+import net.thumbtack.school.elections.server.model.Session;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,19 +32,22 @@ public class CommissionerServiceTest {
     private ContextService contextService;
     @Mock
     private CandidateService candidateService;
-    private final Gson gson;
-    private final CommissionerService commissionerService;
+
+    private final Gson gson = new Gson();
+    @InjectMocks
+    private CommissionerService commissionerService;
 
     public CommissionerServiceTest() {
         MockitoAnnotations.initMocks(this);
-        gson = new Gson();
         Map<String, Commissioner> commissionerMap = new HashMap<>();
         commissionerMap.put("victor.net", new Commissioner("victor.net", "25345Qw&&", true));
         commissionerMap.put("egor.net", new Commissioner("egor.net", "25345Qw&&", false));
         commissionerMap.put("igor.net", new Commissioner("igor.net", "25345Qw&&", false));
-        commissionerService = new CommissionerService(sessionService, electionService, contextService, gson,
-                candidateService);
         Database.getInstance().setCommissionerMap(commissionerMap);
+        Database.getInstance().getCommissionerSessions()
+                .put(new Commissioner("victor.net", "25345Qw&&", true), new Session("1"));
+        Database.getInstance().getCommissionerSessions()
+                .put(new Commissioner("egor.net", "25345Qw&&", false), new Session("2"));
     }
 
     @Test
@@ -98,44 +102,38 @@ public class CommissionerServiceTest {
     }
 
     @Test
-    public void logoutTest_Success() throws ServerException {
+    public void logoutTest_Success() {
         when(commissionerService.getSessionService().logoutCommissioner(anyString())).thenReturn("");
-        assertEquals("", commissionerService.logout(gson.toJson(new LogoutDtoRequest(randomString()))));
+        assertEquals("", commissionerService.logout(gson.toJson(new LogoutDtoRequest("1"))));
         verify(commissionerService.getSessionService(), times(1)).logoutCommissioner(anyString());
     }
 
     @Test
-    public void logoutTest_Field_Not_Valid() throws ServerException {
+    public void logoutTest_Field_Not_Valid() {
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 commissionerService.logout(gson.toJson(new LogoutDtoRequest(null))));
         verify(commissionerService.getSessionService(), times(0)).logoutCommissioner(anyString());
     }
 
     @Test
-    public void logoutTest_Json_Is_Null() throws ServerException {
+    public void logoutTest_Json_Is_Null() {
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 commissionerService.logout(null));
         verify(commissionerService.getSessionService(), times(0)).logoutCommissioner(anyString());
     }
 
     @Test
-    public void startElectionTest_Success() throws ServerException {
-        Commissioner commissioner = new Commissioner("victor.net", "25345Qw&&", true);
-        when(commissionerService.getSessionService().getCommissioner(anyString())).thenReturn(
-                gson.toJson(new GetCommissionerDtoResponse(commissioner)));
+    public void startElectionTest_Success() {
         when(commissionerService.getElectionService().startElection(anyString())).thenReturn("");
         assertEquals("", commissionerService.startElection(gson.toJson(new StartElectionDtoRequest("1"))));
         verify(commissionerService.getElectionService(), times(1)).startElection(anyString());
     }
 
     @Test
-    public void startElectionTest_Not_Chairman() throws ServerException {
-        Commissioner commissioner = new Commissioner("victor.net", "25345Qw&&", false);
-        when(commissionerService.getSessionService().getCommissioner(anyString())).thenReturn(
-                gson.toJson(new GetCommissionerDtoResponse(commissioner)));
+    public void startElectionTest_Not_Chairman() {
         when(commissionerService.getElectionService().startElection(anyString())).thenReturn("");
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage())),
-                commissionerService.startElection(gson.toJson(new StartElectionDtoRequest(randomString()))));
+                commissionerService.startElection(gson.toJson(new StartElectionDtoRequest("2"))));
         verify(commissionerService.getElectionService(), times(0)).startElection(anyString());
     }
 
@@ -154,26 +152,20 @@ public class CommissionerServiceTest {
     }
 
     @Test
-    public void getElectionResultTest_Success() throws ServerException {
-        Commissioner commissioner = new Commissioner("victor.net", "25345Qw&&", true);
-        when(commissionerService.getSessionService().getCommissioner(anyString())).thenReturn(
-                gson.toJson(new GetCommissionerDtoResponse(commissioner)));
+    public void getElectionResultTest_Success() {
         when(commissionerService.getElectionService().getElectionResult()).thenReturn(
                 gson.toJson(new GetElectionResultDtoResponse(new HashSet<>())));
         assertEquals(gson.toJson(new GetElectionResultDtoResponse(new HashSet<>())),
-                commissionerService.getElectionResult(gson.toJson(new GetElectionResultDtoRequest(randomString()))));
+                commissionerService.getElectionResult(gson.toJson(new GetElectionResultDtoRequest("1"))));
         verify(commissionerService.getElectionService(), times(1)).getElectionResult();
     }
 
     @Test
-    public void getElectionResultTest_Not_Chairman() throws ServerException {
-        Commissioner commissioner = new Commissioner("victor.net", "25345Qw&&", false);
-        when(commissionerService.getSessionService().getCommissioner(anyString())).thenReturn(
-                gson.toJson(new GetCommissionerDtoResponse(commissioner)));
+    public void getElectionResultTest_Not_Chairman() {
         when(commissionerService.getElectionService().getElectionResult()).thenReturn(
                 gson.toJson(new GetElectionResultDtoResponse(new HashSet<>())));
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NOT_CHAIRMAN.getMessage())),
-                commissionerService.getElectionResult(gson.toJson(new GetElectionResultDtoRequest(randomString()))));
+                commissionerService.getElectionResult(gson.toJson(new GetElectionResultDtoRequest("2"))));
         verify(commissionerService.getElectionService(), times(0)).getElectionResult();
     }
 
@@ -190,7 +182,6 @@ public class CommissionerServiceTest {
                 commissionerService.getElectionResult(null));
         verify(commissionerService.getElectionService(), times(0)).getElectionResult();
     }
-
 
     private String randomString() {
         Random random = new Random();

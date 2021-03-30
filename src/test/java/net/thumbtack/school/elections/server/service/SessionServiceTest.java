@@ -1,173 +1,125 @@
 package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dao.SessionDao;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Commissioner;
+import net.thumbtack.school.elections.server.model.Session;
 import net.thumbtack.school.elections.server.model.Voter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SessionServiceTest {
     private final Gson gson = new Gson();
-    private final SessionService sessionService = new SessionService(gson);
+    @Mock
+    private SessionDao dao;
+    @InjectMocks
+    private SessionService sessionService;
 
     @Test
-    public void getVoterSessionTest_Success() {
+    public void getVoterSessionTest_Success() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        sessionService.getVoterSessions().put(voter, new Session("1"));
+        when(sessionService.getDao().getVoterSession(any())).thenReturn(new Session("1"));
         assertEquals(gson.toJson(new GetVoterSessionDtoResponse(new Session("1"))),
                 sessionService.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(voter))));
     }
 
     @Test
-    public void getVoterSessionTest_Logout() {
+    public void getVoterSessionTest_Logout() throws ServerException {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage())),
-                sessionService.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(voter))));
+        when(sessionService.getDao().getVoterSession(any())).thenThrow(new ServerException(ExceptionErrorCode.LOGOUT));
+        try {
+            sessionService.getVoterSession(gson.toJson(new GetVoterSessionDtoRequest(voter)));
+        } catch (ServerException ex) {
+            assertEquals(ex.getErrorCode(), ExceptionErrorCode.LOGOUT);
+        }
     }
 
     @Test
-    public void getCommissionerSessionTest_Success() {
+    public void getCommissionerSessionTest_Success() throws ServerException {
         Commissioner commissioner = new Commissioner("login", "password", true);
-        sessionService.getCommissionerSessions().put(commissioner, new Session("1"));
-        assertEquals(gson.toJson(new GetCommissionerSessionDtoResponse(new Session("1"))),
-                sessionService.getCommissionerSession(gson.toJson(new GetCommissionerSessionDtoRequest(commissioner))));
+        when(sessionService.getDao().getCommissionerSession(any())).thenThrow(new ServerException(ExceptionErrorCode.LOGOUT));
+        try {
+            sessionService.getCommissionerSession(gson.toJson(new GetCommissionerSessionDtoRequest(commissioner)));
+        } catch (ServerException ex) {
+            assertEquals(ex.getErrorCode(), ExceptionErrorCode.LOGOUT);
+        }
     }
 
     @Test
     public void getCommissionerSessionTest_Logout() {
         Commissioner commissioner = new Commissioner("login", "password", true);
-        assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.LOGOUT.getMessage())),
-                sessionService.getCommissionerSession(gson.toJson(new GetCommissionerSessionDtoRequest(commissioner))));
-    }
-
-    @Test
-    public void getVoterTest_Success() throws ServerException {
-        Voter voter = new Voter(randomString(), randomString(), null, randomString(),
-                1, 1, randomString(), "Pas&77123");
-        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
-                1, 1, randomString(), "Pas&77123");
-        Voter voter3 = new Voter(randomString(), randomString(), null, randomString(),
-                1, 1, randomString(), "Pas&77123");
-        String token = gson.fromJson(sessionService.loginVoter(
-                gson.toJson(new LoginVoterDtoRequest(voter))), LoginVoterDtoResponse.class).getToken();
-        sessionService.loginVoter(gson.toJson(new LoginVoterDtoRequest(voter2)));
-        sessionService.loginVoter(gson.toJson(new LoginVoterDtoRequest(voter3)));
-        assertEquals(gson.toJson(new GetVoterDtoResponse(voter)),
-                sessionService.getVoter(gson.toJson(new GetVoterDtoRequest(token))));
-    }
-
-    @Test
-    public void getVoterTest_Logout() {
         try {
-            sessionService.getVoter(gson.toJson(new GetVoterDtoRequest("token")));
+            sessionService.getCommissionerSession(gson.toJson(new GetCommissionerSessionDtoRequest(commissioner)));
         } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.LOGOUT, ex.getErrorCode());
+            assertEquals(ex.getErrorCode(), ExceptionErrorCode.LOGOUT);
         }
     }
 
     @Test
-    public void getCommissionerTest_Success() throws ServerException {
-        Commissioner commissioner1 = new Commissioner(randomString(), randomString(), true);
-        Commissioner commissioner2 = new Commissioner(randomString(), randomString(), true);
-        Commissioner commissioner3 = new Commissioner(randomString(), randomString(), true);
-        String token = gson.fromJson(sessionService.loginCommissioner(
-                gson.toJson(new LoginCommissionerDtoRequest(commissioner1))),
-                LoginCommissionerDtoResponse.class).getToken();
-        sessionService.loginCommissioner(gson.toJson(new LoginCommissionerDtoRequest(commissioner2)));
-        sessionService.loginCommissioner(gson.toJson(new LoginCommissionerDtoRequest(commissioner3)));
-        assertEquals(gson.toJson(new GetCommissionerDtoResponse(commissioner1)),
-                sessionService.getCommissioner(gson.toJson(new GetCommissionerDtoRequest(token))));
-    }
-    @Test
-    public void getCommissionerTest_Logout() {
-        try {
-            sessionService.getCommissioner(gson.toJson(new GetCommissionerDtoRequest(randomString())));
-        } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.LOGOUT, ex.getErrorCode());
-        }
-    }
-
-    @Test
-    public void isLoginTest_Voter_Success() {
+    public void loginVoterTest_Success() {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        Voter voter2 = new Voter(randomString(), randomString(), null, randomString(),
-                1, 1, randomString(), "Pas&77123");
-        Voter voter3 = new Voter(randomString(), randomString(), null, randomString(),
-                1, 1, randomString(), "Pas&77123");
-        String token = gson.fromJson(sessionService.loginVoter(
-                gson.toJson(new LoginVoterDtoRequest(voter))), LoginVoterDtoResponse.class).getToken();
-        sessionService.loginVoter(gson.toJson(new LoginVoterDtoRequest(voter2)));
-        sessionService.loginVoter(gson.toJson(new LoginVoterDtoRequest(voter3)));
-        assertEquals(gson.toJson(new IsLoginDtoResponse(true)),
-                sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(token))));
+        when(sessionService.getDao().loginVoter(any(), any())).thenReturn(new Session("1"));
+        assertEquals(gson.toJson(new LoginVoterDtoResponse("1")),
+                sessionService.loginVoter(gson.toJson(new LoginVoterDtoRequest(voter))));
     }
 
     @Test
-    public void isLoginTest_Commissioner_Success() {
-        Commissioner commissioner1 = new Commissioner(randomString(), randomString(), true);
-        Commissioner commissioner2 = new Commissioner(randomString(), randomString(), true);
-        Commissioner commissioner3 = new Commissioner(randomString(), randomString(), true);
-        String token = gson.fromJson(sessionService.loginCommissioner(
-                gson.toJson(new LoginCommissionerDtoRequest(commissioner1))),
-                LoginCommissionerDtoResponse.class).getToken();
-        sessionService.loginCommissioner(gson.toJson(new LoginCommissionerDtoRequest(commissioner2)));
-        sessionService.loginCommissioner(gson.toJson(new LoginCommissionerDtoRequest(commissioner3)));
+    public void loginCommissionerTest_Success() {
+        Commissioner commissioner = new Commissioner("login", "password", true);
+        when(sessionService.getDao().loginCommissioner(any(), any())).thenReturn(new Session("1"));
+        assertEquals(gson.toJson(new LoginCommissionerDtoResponse("1")),
+                sessionService.loginCommissioner(gson.toJson(new LoginCommissionerDtoRequest(commissioner))));
+    }
+
+    @Test
+    public void isLoginTest_Success() {
+        when(sessionService.getDao().isLogin(anyString())).thenReturn(true);
         assertEquals(gson.toJson(new IsLoginDtoResponse(true)),
-                sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(token))));
+                sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(randomString()))));
     }
 
     @Test
     public void isLoginTest_Logout() {
+        when(sessionService.getDao().isLogin(anyString())).thenReturn(false);
         assertEquals(gson.toJson(new IsLoginDtoResponse(false)),
                 sessionService.isLogin(gson.toJson(new IsLoginDtoRequest(randomString()))));
     }
 
     @Test
-    public void logoutVoterTest_Success() throws ServerException {
+    public void logoutVoterTest_Success() {
         Voter voter = new Voter(randomString(), randomString(), null, randomString(),
                 1, 1, randomString(), "Pas&77123");
-        String token = gson.fromJson(sessionService.loginVoter(
-                gson.toJson(new LoginVoterDtoRequest(voter))), LoginVoterDtoResponse.class).getToken();
-        assertEquals("", sessionService.logoutVoter(gson.toJson(new LogoutDtoRequest(token))));
-        assertFalse(sessionService.getVoterSessions().containsKey(voter));
+       assertEquals("", sessionService.logoutVoter(gson.toJson(new LogoutVoterDtoRequest(voter))));
+       verify(sessionService.getDao(), times(1)).logoutVoter(voter);
     }
 
-    @Test
-    public void logoutVoterTest_Logout() {
-        try {
-            sessionService.logoutVoter(gson.toJson(new LogoutDtoRequest(randomString())));
-        } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.LOGOUT, ex.getErrorCode());
-        }
-    }
 
     @Test
-    public void logoutCommissionerTest_Success() throws ServerException {
+    public void logoutCommissionerTest_Success() {
         Commissioner commissioner = new Commissioner(randomString(), randomString(), true);
-        String token = gson.fromJson(sessionService.loginCommissioner(
-                gson.toJson(new LoginCommissionerDtoRequest(commissioner))), LoginCommissionerDtoResponse.class)
-                .getToken();
-        assertEquals("", sessionService.logoutCommissioner(gson.toJson(new LogoutDtoRequest(token))));
-        assertFalse(sessionService.getCommissionerSessions().containsKey(commissioner));
+        assertEquals("", sessionService
+                .logoutCommissioner(gson.toJson(new LogoutCommissionerDtoRequest(commissioner))));
+        verify(sessionService.getDao(), times(1)).logoutCommissioner(commissioner);
     }
 
-    @Test
-    public void logoutCommissionerTest_Logout() {
-        try {
-            sessionService.logoutCommissioner(gson.toJson(new LogoutDtoRequest(randomString())));
-        } catch (ServerException ex) {
-            assertEquals(ExceptionErrorCode.LOGOUT, ex.getErrorCode());
-        }
-    }
 
     private String randomString() {
         Random random = new Random();

@@ -2,6 +2,7 @@ package net.thumbtack.school.elections.server.daoimpl;
 
 import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.database.Database;
+import net.thumbtack.school.elections.server.model.Session;
 import net.thumbtack.school.elections.server.model.Voter;
 import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
@@ -49,4 +50,15 @@ public class VoterDaoImpl implements VoterDao {
         }
         return database.getVoterMap().put(voter.getLogin(), voter);
     }
+
+    @Override
+    public Voter getVoterByToken(String token) throws ServerException {
+        for (Map.Entry<Voter, Session> entry : database.getVoterSessions().entrySet()) {
+            if (entry.getValue().getToken().equals(token)) {
+                return entry.getKey();
+            }
+        }
+        throw new ServerException(ExceptionErrorCode.LOGOUT);
+    }
+
 }

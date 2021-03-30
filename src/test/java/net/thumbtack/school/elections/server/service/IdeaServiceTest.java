@@ -1,16 +1,18 @@
 package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Idea;
+import net.thumbtack.school.elections.server.model.Session;
 import net.thumbtack.school.elections.server.model.Voter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -26,14 +28,11 @@ public class IdeaServiceTest {
     private ContextService contextService;
     @Mock
     private SessionService sessionService;
-    private final Gson gson;
-    private final IdeaService ideaService;
-
-    public IdeaServiceTest() {
-        MockitoAnnotations.initMocks(this);
-        gson = new Gson();
-        ideaService = new IdeaService(contextService, gson, sessionService);
-    }
+    @Mock
+    private VoterDao voterDao;
+    private final Gson gson = new Gson();
+    @InjectMocks
+    private IdeaService ideaService;
 
     @Test
     public void getIdeasTest_Success() {
@@ -83,8 +82,7 @@ public class IdeaServiceTest {
     public void addIdeaTest_Success() throws ServerException {
         Voter voter = getNewVoter();
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals(ideaService.addIdea(gson.toJson(new AddIdeaDtoRequest("idea", randomString()))),
                 gson.toJson(new AddIdeaDtoResponse(ideaService.getIdeas().get(0).getKey())));
     }
@@ -94,7 +92,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(true);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())),
                 ideaService.addIdea(gson.toJson(new AddIdeaDtoRequest("idea", randomString()))));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -102,7 +100,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 ideaService.addIdea(gson.toJson(new AddIdeaDtoRequest(null, randomString()))));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -110,7 +108,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 ideaService.addIdea(null));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -137,8 +135,7 @@ public class IdeaServiceTest {
         ideaService.getIdeas().add(idea2);
         ideaService.getIdeas().add(idea3);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.estimate(
                 gson.toJson(new EstimateIdeaDtoRequest("1", 1, randomString()))));
         assertEquals(3, gson.fromJson(ideaService.getIdea(
@@ -151,8 +148,7 @@ public class IdeaServiceTest {
         Idea idea1 = new Idea("1", voter, "text1");
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         ideaService.estimate(gson.toJson(new EstimateIdeaDtoRequest("1", 1, randomString())));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
                 gson.toJson(new GetIdeaDtoRequest("1"))), GetIdeaDtoResponse.class).getIdea().getRating());
@@ -165,8 +161,7 @@ public class IdeaServiceTest {
         idea1.getVotedVoters().put(voter.getLogin(), 5);
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         ideaService.estimate(gson.toJson(new EstimateIdeaDtoRequest("1", 1, randomString())));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
                 gson.toJson(new GetIdeaDtoRequest("1"))), GetIdeaDtoResponse.class).getIdea().getRating());
@@ -177,7 +172,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(true);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())),
                 ideaService.estimate(gson.toJson(new EstimateIdeaDtoRequest("1", 1, randomString()))));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -185,7 +180,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 ideaService.estimate(gson.toJson(new EstimateIdeaDtoRequest(null, 1, randomString()))));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -193,7 +188,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 ideaService.estimate(null));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -209,8 +204,7 @@ public class IdeaServiceTest {
         ideaService.getIdeas().add(idea2);
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.changeRating(
                 gson.toJson(new ChangeRatingDtoRequest("", "1", 5))));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
@@ -223,8 +217,7 @@ public class IdeaServiceTest {
         Idea idea1 = new Idea("1", voter, "text1");
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString())).thenReturn(
-                gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.changeRating(
                 gson.toJson(new ChangeRatingDtoRequest("", "1", 1))));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
@@ -237,8 +230,7 @@ public class IdeaServiceTest {
         Idea idea1 = new Idea("1", getNewVoter(), "text1");
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.changeRating(
                 gson.toJson(new ChangeRatingDtoRequest("", "1", 1))));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
@@ -250,7 +242,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(true);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.ELECTION_START.getMessage())),
                 ideaService.changeRating(gson.toJson(new ChangeRatingDtoRequest("", "1", 1))));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -258,7 +250,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 ideaService.changeRating(gson.toJson(new ChangeRatingDtoRequest(null, "1", 1))));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -266,7 +258,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 ideaService.changeRating(null));
-        verify(ideaService.getSessionService(), times(0)).getVoter(anyString());
+        verify(ideaService.getDao(), times(0)).getVoterByToken(anyString());
     }
 
     @Test
@@ -280,8 +272,7 @@ public class IdeaServiceTest {
         ideaService.getIdeas().add(idea2);
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString()))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.removeRating(
                 gson.toJson(new RemoveRatingDtoRequest("", "1"))));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
@@ -297,8 +288,7 @@ public class IdeaServiceTest {
         idea1.setSum(6);
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString())).thenReturn(
-                gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.removeRating(
                 gson.toJson(new RemoveRatingDtoRequest("", "1"))));
         assertEquals(3, gson.fromJson(ideaService.getIdea(
@@ -311,8 +301,7 @@ public class IdeaServiceTest {
         Idea idea1 = new Idea("1", getNewVoter(), "text1");
         ideaService.getIdeas().add(idea1);
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
-        when(ideaService.getSessionService().getVoter(anyString())).thenReturn(
-                gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         assertEquals("", ideaService.removeRating(
                 gson.toJson(new RemoveRatingDtoRequest("", "1"))));
         assertEquals(5, gson.fromJson(ideaService.getIdea(
@@ -369,8 +358,7 @@ public class IdeaServiceTest {
         when(ideaService.getContextService().isElectionStart()).thenReturn(false);
         when(ideaService.getSessionService().getVoterSession(anyString())).thenReturn(
                 gson.toJson(new GetVoterSessionDtoResponse(new Session("1"))));
-        when(ideaService.getSessionService().getVoter(anyString())).thenReturn(
-                gson.toJson(new GetVoterDtoResponse(voter)));
+        when(ideaService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         List<String> ideas = new ArrayList<>();
         ideas.add("text1");
         ideas.add("text2");

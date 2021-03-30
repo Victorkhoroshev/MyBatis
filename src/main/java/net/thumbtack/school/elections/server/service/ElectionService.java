@@ -1,11 +1,11 @@
 package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.ErrorDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetCandidateDtoResponse;
 import net.thumbtack.school.elections.server.dto.response.GetElectionResultDtoResponse;
-import net.thumbtack.school.elections.server.dto.response.GetVoterDtoResponse;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
 import net.thumbtack.school.elections.server.exeption.ServerException;
 import net.thumbtack.school.elections.server.model.Candidate;
@@ -15,8 +15,8 @@ import java.util.*;
 
 public class ElectionService implements Serializable {
     private final transient ContextService contextService;
-    private final transient SessionService sessionService;
     private final transient CandidateService candidateService;
+    private final transient VoterDao dao;
     private final transient Gson gson;
     private final transient Validation validation;
     private Map<Candidate, List<Voter>> candidateMap;
@@ -25,12 +25,11 @@ public class ElectionService implements Serializable {
     private static final transient String EMPTY_JSON = "";
     private static final transient String NULL_VALUE = "Некорректный запрос.";
 
-    public ElectionService(ContextService contextService, Gson gson, SessionService sessionService,
-                           CandidateService candidateService) {
+    public ElectionService(ContextService contextService, VoterDao dao, CandidateService candidateService) {
         this.contextService = contextService;
-        this.gson = gson;
-        this.sessionService = sessionService;
+        this.dao = dao;
         this.candidateService = candidateService;
+        gson = new Gson();
         validation = new Validation();
     }
 
@@ -75,9 +74,7 @@ public class ElectionService implements Serializable {
         VoteDtoRequest request = gson.fromJson(requestJsonString, VoteDtoRequest.class);
         try {
             validation.validate(request.getToken());
-            GetVoterDtoResponse getVoterDtoResponse = gson.fromJson(sessionService.getVoter(gson.toJson(
-                    new GetVoterDtoRequest(request.getToken()))), GetVoterDtoResponse.class);
-            Voter voter = getVoterDtoResponse.getVoter();
+            Voter voter = dao.getVoterByToken(request.getToken());
             if (candidateMap.values().stream()
                     .noneMatch(voters -> voters.contains(voter)) && vsEveryone.stream()
                     .noneMatch(voter1 -> voter1.equals(voter))) {
@@ -138,10 +135,6 @@ public class ElectionService implements Serializable {
         return contextService;
     }
 
-    public SessionService getSessionService() {
-        return sessionService;
-    }
-
     public CandidateService getCandidateService() {
         return candidateService;
     }
@@ -160,5 +153,9 @@ public class ElectionService implements Serializable {
 
     public List<Voter> getVsEveryone() {
         return vsEveryone;
+    }
+
+    public VoterDao getDao() {
+        return dao;
     }
 }

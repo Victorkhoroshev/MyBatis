@@ -1,6 +1,6 @@
 package net.thumbtack.school.elections.server.dto.response;
 
-import net.thumbtack.school.elections.server.dto.request.Session;
+import net.thumbtack.school.elections.server.model.Session;
 
 public class GetVoterSessionDtoResponse {
     private final Session session;

@@ -1,6 +1,8 @@
 package net.thumbtack.school.elections.server;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.daoimpl.SessionDaoImpl;
+import net.thumbtack.school.elections.server.daoimpl.VoterDaoImpl;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.service.*;
 import org.junit.jupiter.api.Test;
@@ -74,7 +76,6 @@ public class ServerTest {
                 () -> assertNull(server1.getVoterService()),
                 () -> assertNull(server1.getElectionService()),
                 () -> assertNull(server1.getCommissionerService())
-
         );
     }
 
@@ -311,14 +312,15 @@ public class ServerTest {
     private class MyServer extends Server {
         public void startServer(String savedDataFileName) {
             gson = new Gson();
-            sessionService = new SessionService(gson);
+            sessionService = new SessionService(new SessionDaoImpl());
             contextService = new ContextService();
-            ideaService = new IdeaService(contextService, gson, sessionService);
-            voterService = new VoterService(sessionService, contextService, gson, ideaService);
-            candidateService = new CandidateService(contextService, gson, sessionService, voterService, ideaService);
-            electionService = new ElectionService(contextService, gson, sessionService, candidateService);
+            ideaService = new IdeaService(contextService, sessionService, new VoterDaoImpl());
+            voterService = new VoterService(new VoterDaoImpl(), sessionService, contextService, ideaService);
+            candidateService = new CandidateService(contextService, sessionService, voterService.getDao(), voterService,
+                    ideaService);
+            electionService = new ElectionService(contextService,voterService.getDao(), candidateService);
             commissionerService = new CommissionerService(sessionService, electionService,
-                    contextService, gson, candidateService);
+                    contextService, candidateService);
         }
     }
 }

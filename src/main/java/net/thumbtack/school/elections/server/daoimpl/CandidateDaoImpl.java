@@ -14,7 +14,10 @@ public class CandidateDaoImpl implements CandidateDao {
      */
     @Override
     public Candidate get(String login) {
-        return database.getCandidateByLogin(login);
+        if (database.getCandidateMap().containsKey(login)) {
+            return database.getCandidateByLogin(login);
+        }
+        return null;
     }
 
     /**

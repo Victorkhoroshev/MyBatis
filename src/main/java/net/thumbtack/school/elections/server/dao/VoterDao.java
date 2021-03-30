@@ -10,5 +10,7 @@ public interface VoterDao {
 
     Set<Voter> getAll();
 
-    Voter save(Voter t) throws ServerException;
+    Voter save(Voter voter) throws ServerException;
+
+    Voter getVoterByToken(String token) throws ServerException;
 }

@@ -1,6 +1,8 @@
 package net.thumbtack.school.elections.server;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.daoimpl.SessionDaoImpl;
+import net.thumbtack.school.elections.server.daoimpl.VoterDaoImpl;
 import net.thumbtack.school.elections.server.model.Context;
 import net.thumbtack.school.elections.server.service.*;
 import java.io.*;
@@ -17,7 +19,7 @@ public class Server {
 
     public void startServer(String savedDataFileName) throws IOException, ClassNotFoundException {
         gson = new Gson();
-        sessionService = new SessionService(gson);
+        sessionService = new SessionService(new SessionDaoImpl());
         if (savedDataFileName != null) {
             try (ObjectInputStream objectInputStream = new ObjectInputStream(
                     new FileInputStream(savedDataFileName))) {
@@ -26,17 +28,18 @@ public class Server {
                 candidateService = context.getCandidateService();
                 electionService = context.getElectionService();
                 contextService = new ContextService(context);
-                commissionerService = new CommissionerService(sessionService, electionService, contextService, gson,
+                commissionerService = new CommissionerService(sessionService, electionService, contextService,
                         candidateService);
-                voterService = new VoterService(sessionService, contextService, gson, ideaService);
+                voterService = new VoterService(new VoterDaoImpl(), sessionService, contextService, ideaService);
             }
         } else {
             contextService = new ContextService();
-            ideaService = new IdeaService(contextService, gson, sessionService);
-            voterService = new VoterService(sessionService, contextService, gson, ideaService);
-            candidateService = new CandidateService(contextService, gson, sessionService, voterService, ideaService);
-            electionService = new ElectionService(contextService, gson, sessionService, candidateService);
-            commissionerService = new CommissionerService(sessionService, electionService, contextService, gson,
+            ideaService = new IdeaService(contextService, sessionService, new VoterDaoImpl());
+            voterService = new VoterService(new VoterDaoImpl(), sessionService, contextService, ideaService);
+            candidateService = new CandidateService(contextService, sessionService, voterService.getDao(), voterService,
+                    ideaService);
+            electionService = new ElectionService(contextService, voterService.getDao(), candidateService);
+            commissionerService = new CommissionerService(sessionService, electionService, contextService,
                     candidateService);
         }
     }

@@ -1,6 +1,7 @@
 package net.thumbtack.school.elections.server.service;
 
 import com.google.gson.Gson;
+import net.thumbtack.school.elections.server.dao.VoterDao;
 import net.thumbtack.school.elections.server.dto.request.*;
 import net.thumbtack.school.elections.server.dto.response.*;
 import net.thumbtack.school.elections.server.exeption.ExceptionErrorCode;
@@ -9,8 +10,8 @@ import net.thumbtack.school.elections.server.model.Candidate;
 import net.thumbtack.school.elections.server.model.Voter;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -25,19 +26,14 @@ public class ElectionServiceTest {
     @Mock
     private ContextService contextService;
     @Mock
-    private SessionService sessionService;
-    @Mock
     private CandidateService candidateService;
-    private final Gson gson;
-    private final ElectionService electionService;
+    @Mock
+    private VoterDao dao;
 
-    public ElectionServiceTest() {
-        MockitoAnnotations.initMocks(this);
-        gson = new Gson();
-        electionService = new ElectionService(contextService, gson, sessionService, candidateService);
-        electionService.setCandidateMap(new HashMap<>());
-        electionService.setVsEveryone(new ArrayList<>());
-    }
+    private final Gson gson = new Gson();
+    @InjectMocks
+    private ElectionService electionService;
+
 
     @Test
     public void startElectionTest_Success() {
@@ -54,9 +50,10 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(getNewVoter());
+        electionService.setCandidateMap(new HashMap<>());
+        electionService.setVsEveryone(new ArrayList<>());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
                 .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), randomString()))));
@@ -70,10 +67,11 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(getNewVoter());
+        electionService.setCandidateMap(new HashMap<>());
+        electionService.setVsEveryone(new ArrayList<>());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
         electionService.getCandidateMap().put(new Candidate(getNewVoter()), new ArrayList<>());
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
                 .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), null))));
@@ -87,10 +85,11 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(getNewVoter());
+        electionService.setCandidateMap(new HashMap<>());
+        electionService.setVsEveryone(new ArrayList<>());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
         electionService.getVsEveryone().add(voter);
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
                 .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), randomString()))));
@@ -104,10 +103,11 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(getNewVoter());
+        electionService.setCandidateMap(new HashMap<>());
+        electionService.setVsEveryone(new ArrayList<>());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
         electionService.getCandidateMap().get(candidate).add(voter);
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
                 .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), randomString()))));
@@ -121,9 +121,10 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         Voter voter = getNewVoter();
         Candidate candidate = new Candidate(voter);
+        electionService.setCandidateMap(new HashMap<>());
+        electionService.setVsEveryone(new ArrayList<>());
         electionService.getCandidateMap().put(candidate, new ArrayList<>());
-        when(electionService.getSessionService().getVoter(gson.toJson(new GetVoterDtoRequest(anyString()))))
-                .thenReturn(gson.toJson(new GetVoterDtoResponse(voter)));
+        when(electionService.getDao().getVoterByToken(anyString())).thenReturn(voter);
         when(electionService.getCandidateService().getCandidate(gson.toJson(new GetCandidateDtoRequest(anyString()))))
                 .thenReturn(gson.toJson(new GetCandidateDtoResponse(candidate)));
         assertEquals("", electionService.vote(gson.toJson(new VoteDtoRequest(randomString(), voter.getLogin()))));
@@ -137,7 +138,7 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 electionService.vote(gson.toJson(new VoteDtoRequest(null, randomString()))));
-        verify(electionService.getSessionService(), times(0)).getVoter(anyString());
+        verify(electionService.getDao(), times(0)).getVoterByToken(anyString());
         verify(electionService.getCandidateService(), times(0)).getCandidate(anyString());
     }
 
@@ -148,7 +149,7 @@ public class ElectionServiceTest {
         when(electionService.getContextService().isElectionStop()).thenReturn(false);
         assertEquals(gson.toJson(new ErrorDtoResponse(ExceptionErrorCode.NULL_VALUE.getMessage())),
                 electionService.vote(null));
-        verify(electionService.getSessionService(), times(0)).getVoter(anyString());
+        verify(electionService.getDao(), times(0)).getVoterByToken(anyString());
         verify(electionService.getCandidateService(), times(0)).getCandidate(anyString());
     }
 
