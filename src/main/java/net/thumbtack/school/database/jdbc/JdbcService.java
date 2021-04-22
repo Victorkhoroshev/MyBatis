@@ -98,7 +98,7 @@ public class JdbcService {
     }
 
     public static void deleteTrainees() throws SQLException {
-        String dropQuery = "truncate table trainee";
+        String dropQuery = "delete from trainee";
         try (PreparedStatement statement = CONNECTION.prepareStatement(dropQuery)) {
             statement.executeUpdate();
         }
@@ -142,7 +142,7 @@ public class JdbcService {
     }
 
     public static void deleteSubjects() throws SQLException {
-        String dropQuery = "truncate table subject";
+        String dropQuery = "delete from subject";
         try (PreparedStatement statement = CONNECTION.prepareStatement(dropQuery)) {
             statement.executeUpdate();
         }
@@ -193,7 +193,7 @@ public class JdbcService {
     }
 
     public static void deleteSchools() throws SQLException {
-        String dropQuery = "truncate table school";
+        String dropQuery = "delete from school";
         try (PreparedStatement statement = CONNECTION.prepareStatement(dropQuery)) {
             statement.executeUpdate();
         }
