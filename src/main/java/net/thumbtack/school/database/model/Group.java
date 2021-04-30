@@ -1,10 +1,12 @@
 package net.thumbtack.school.database.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class Group {
+public class Group implements Comparable<Group>{
     private int id;
     private String name;
     private String room;
@@ -89,15 +91,22 @@ public class Group {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Group)) return false;
         Group group = (Group) o;
-        return id == group.id &&
-                Objects.equals(name, group.name) &&
-                Objects.equals(room, group.room);
+        return getId() == group.getId() &&
+                Objects.equals(getName(), group.getName()) &&
+                Objects.equals(getRoom(), group.getRoom()) &&
+                Objects.equals(getTrainees(), group.getTrainees()) &&
+                Objects.equals(getSubjects(), group.getSubjects());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, room);
+        return Objects.hash(getId(), getName(), getRoom(), getTrainees(), getSubjects());
+    }
+
+    @Override
+    public int compareTo(@NotNull Group o) {
+        return Integer.compare(id, o.id);
     }
 }

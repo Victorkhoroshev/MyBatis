@@ -12,6 +12,22 @@ public class Trainee {
 
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trainee)) return false;
+        Trainee trainee = (Trainee) o;
+        return getId() == trainee.getId() &&
+                getRating() == trainee.getRating() &&
+                Objects.equals(getFirstName(), trainee.getFirstName()) &&
+                Objects.equals(getLastName(), trainee.getLastName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getFirstName(), getLastName(), getRating());
+    }
+
     public Trainee(int id, String firstName, String lastName, int rating) {
         setId(id);
         setFirstName(firstName);
@@ -54,16 +70,4 @@ public class Trainee {
         this.rating = rating;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Trainee trainee = (Trainee) o;
-        return id == trainee.id;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }

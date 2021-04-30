@@ -36,6 +36,7 @@ public class JdbcService {
             statement.setString(2, trainee.getLastName());
             statement.setInt(3, trainee.getRating());
             statement.setInt(4, trainee.getId());
+            statement.executeUpdate();
         }
     }
 
@@ -224,6 +225,8 @@ public class JdbcService {
              if (resultSet.next()) {
              school = new School(resultSet.getInt(1), resultSet.getString(2),
                      resultSet.getInt(3));
+             school.addGroup(new Group(resultSet.getInt(4), resultSet.getString(6),
+                     resultSet.getString(7)));
              while (resultSet.next()) {
                  school.addGroup(new Group(resultSet.getInt(4), resultSet.getString(6),
                          resultSet.getString(7)));
@@ -235,7 +238,7 @@ public class JdbcService {
 
     public static List<School> getSchoolsWithGroups() throws SQLException {
         List<School> schools = new ArrayList<>();
-        Map<Group, Integer> groupMap = new HashMap<>();
+        SortedMap<Group, Integer> groupMap = new TreeMap<>();
         String selectQuery = "select * from school join `group`";
         try (PreparedStatement statement = CONNECTION.prepareStatement(selectQuery);
         ResultSet resultSet = statement.executeQuery()) {

@@ -72,14 +72,16 @@ public class School {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof School)) return false;
         School school = (School) o;
-        return year == school.year &&
-                Objects.equals(name, school.name);
+        return getId() == school.getId() &&
+                getYear() == school.getYear() &&
+                Objects.equals(getName(), school.getName()) &&
+                Objects.equals(getGroups(), school.getGroups());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, year);
+        return Objects.hash(getId(), getName(), getYear(), getGroups());
     }
 }

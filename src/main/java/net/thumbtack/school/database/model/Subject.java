@@ -31,20 +31,22 @@ public class Subject {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof Subject)) return false;
         Subject subject = (Subject) o;
-        return Objects.equals(name, subject.name);
+        return getId() == subject.getId() &&
+                Objects.equals(getName(), subject.getName());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name);
+        return Objects.hash(getId(), getName());
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
 }
